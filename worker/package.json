@@ -1,0 +1,12 @@
+{
+  "name": "utilityclient-keys",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Key API and site content store for Utility Client",
+  "scripts": {
+    "setup": "node setup.mjs",
+    "deploy": "wrangler deploy",
+    "dev": "wrangler dev"
+  }
+}

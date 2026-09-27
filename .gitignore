@@ -21,6 +21,9 @@ remappedSrc/
 .env
 secrets.json
 worker/.dev.vars
+worker/admin-token.txt
+worker/.wrangler/
+worker/node_modules/
 
 # OS clutter
 $RECYCLE.BIN/

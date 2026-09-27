@@ -1,0 +1,9 @@
+name = "utilityclient-keys"
+main = "index.js"
+compatibility_date = "2026-09-27"
+workers_dev = true
+
+# Filled in by setup.mjs once the namespace exists. Do not edit by hand.
+[[kv_namespaces]]
+binding = "KEYS"
+id = ""
