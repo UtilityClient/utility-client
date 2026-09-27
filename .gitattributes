@@ -1,0 +1,11 @@
+# Normalise line endings so the repo behaves the same on Windows and Linux.
+* text=auto eol=lf
+
+# Windows scripts must keep CRLF
+*.bat text eol=crlf
+gradlew text eol=crlf
+
+# Binary-ish files
+*.jar binary
+*.png binary
+*.ogg binary

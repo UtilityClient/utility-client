@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "id": "utilityclient",
+  "version": "${version}",
+  "name": "Utility Client",
+  "description": "A clean client-side quality-of-life and visual utility mod.",
+  "authors": [
+    "Utility Client contributors"
+  ],
+  "license": "MIT",
+  "environment": "client",
+  "entrypoints": {
+    "client": [
+      "dev.utilityclient.UtilityClient"
+    ]
+  },
+  "mixins": [
+    "utilityclient.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.19.5",
+    "minecraft": "~26.2",
+    "java": ">=25",
+    "fabric-api": "*"
+  }
+}

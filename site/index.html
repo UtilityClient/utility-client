@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Utility Client — client-side QoL for Minecraft 26.2</title>
+<meta name="description" content="A clean client-side quality-of-life and visual utility mod for Minecraft 26.2 on Fabric. Keybinds on every module, an in-GUI colour picker, HUD, player radar, crosshair, free look and more.">
+<link rel="stylesheet" href="styles.css">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%230B0B11'/%3E%3Cpath d='M10 9h3.4v11.2H23V23H10z' fill='%23D000FF'/%3E%3C/svg%3E">
+</head>
+<body>
+
+<header class="nav" id="nav">
+  <a class="brand" href="#top">
+    <span class="brand-mark">U</span>
+    <span class="brand-text">Utility<em>Client</em></span>
+  </a>
+  <nav class="nav-links" id="navLinks">
+    <a href="#features">Features</a>
+    <a href="#modules">Modules</a>
+    <a href="#install">Install</a>
+    <a href="#licence">Licence</a>
+    <a href="#controls">Controls</a>
+    <a href="#scope">Scope</a>
+  </nav>
+  <a class="btn btn-sm" href="#install">Get started</a>
+</header>
+
+<main id="top">
+
+  <section class="hero">
+    <div class="hero-glow"></div>
+    <div class="hero-inner">
+      <span class="pill">Minecraft 26.2 · Fabric · client only</span>
+      <h1>Utility <span>Client</span></h1>
+      <p class="lede">
+        A tidy set of quality-of-life and visual tools. Every module has a keybind, every colour
+        has a real picker, and everything is toggled from one in-game menu.
+      </p>
+      <div class="hero-actions">
+        <a class="btn" href="#install">Install guide</a>
+        <a class="btn btn-ghost" href="#modules">Browse modules</a>
+      </div>
+      <dl class="facts">
+        <div><dt>16</dt><dd>modules</dd></div>
+        <div><dt>1 key</dt><dd>opens the menu</dd></div>
+        <div><dt>0</dt><dd>server side changes</dd></div>
+        <div><dt>JSON</dt><dd>config file</dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <section id="features" class="section">
+    <div class="section-head">
+      <h2>What it gives you</h2>
+      <p>The parts that apply across the whole client, rather than a single module.</p>
+    </div>
+    <div class="grid grid-3">
+      <article class="card">
+        <h3>Keybind on every module</h3>
+        <p>Click a module's key box, then press any keyboard key <em>or</em> mouse button. Works with
+           your own keybinds, ignores held state while a menu is open, and is saved to your config.</p>
+      </article>
+      <article class="card">
+        <h3>Real colour picker</h3>
+        <p>Every colour setting is a swatch you can open: a saturation and brightness square plus a
+           hue slider, with drag support. No preset list, no typing hex codes by hand.</p>
+      </article>
+      <article class="card">
+        <h3>Config you control</h3>
+        <p>Everything lives in a readable JSON file. The Configs tab can save, reload and reset back
+           to defaults without hand-editing anything.</p>
+      </article>
+      <article class="card">
+        <h3>Rounded, consistent UI</h3>
+        <p>One dark purple theme across the menu and the settings screens, with a scrollable
+           settings list, live search and a moveable HUD.</p>
+      </article>
+      <article class="card">
+        <h3>Nothing server side</h3>
+        <p>The mod installs on your client only. No packets are rewritten and no server install is
+           needed, so it cannot break a world or a whitelist.</p>
+      </article>
+      <article class="card">
+        <h3>Bounded automation</h3>
+        <p>Where a module repeats an input, it is capped and clearly labelled. Nothing trades or
+           acts on its own without you being there.</p>
+      </article>
+    </div>
+  </section>
+
+  <section id="modules" class="section section-alt">
+    <div class="section-head">
+      <h2>Modules</h2>
+      <p>All sixteen, grouped by where they live in the menu.</p>
+    </div>
+
+    <p class="note-bar">
+      <strong>Combat is deliberately empty.</strong> This client has no combat automation, so
+      that category exists in the menu for layout reasons and contains nothing. Every other
+      category is populated.
+    </p>
+
+    <div class="filter-bar">
+      <input id="search" type="search" placeholder="Search modules…" aria-label="Search modules">
+      <div class="chips" id="chips">
+        <button class="chip is-active" data-filter="all">All</button>
+        <button class="chip" data-filter="COMBAT">Combat</button>
+        <button class="chip" data-filter="MOVEMENT">Movement</button>
+        <button class="chip" data-filter="DONUTSMP">DonutSMP</button>
+        <button class="chip" data-filter="VISUAL">Visuals</button>
+        <button class="chip" data-filter="MISC">Misc</button>
+      </div>
+    </div>
+
+    <div class="grid grid-2" id="moduleGrid">
+
+      <article class="card module" data-cat="MISC" data-name="hud">
+        <div class="module-top"><h3>HUD</h3><span class="tag on">on by default</span></div>
+        <p>FPS, coordinates, facing and session time on one movable panel.</p>
+        <ul class="module-list">
+          <li>Show FPS, coordinates and session time</li>
+          <li><strong>MOVE</strong> button to drag the HUD anywhere</li>
+          <li>Position stored per client</li>
+        </ul>
+      </article>
+
+      <article class="card module" data-cat="MISC" data-name="player radar">
+        <div class="module-top"><h3>Player Radar</h3><span class="tag">HUD</span></div>
+        <p>A small radar of nearby players, drawn under your HUD.</p>
+        <ul class="module-list">
+          <li>Radius and radar size controls</li>
+          <li>Rotates with you, or stays north-up</li>
+          <li>Names, distances and a live player count</li>
+          <li>Colours dots by whether players are above or below you</li>
+          <li>Hide spectators, show or hide the frame</li>
+        </ul>
+      </article>
+
+      <article class="card module" data-cat="VISUAL" data-name="crosshair">
+        <div class="module-top"><h3>Crosshair</h3><span class="tag">Render</span></div>
+        <p>Ten crosshair models with a real colour picker.</p>
+        <ul class="module-list">
+          <li>Plus, Dot, Circle, Cross, T-Shape, X, Ring, Diamond, Arrow or None</li>
+          <li>Size, thickness and colour</li>
+          <li>Removes the vanilla crosshair so only yours shows</li>
+          <li>Optional attack progress indicator</li>
+        </ul>
+      </article>
+
+      <article class="card module" data-cat="VISUAL" data-name="block highlight">
+        <div class="module-top"><h3>Block Highlight</h3><span class="tag">Render</span></div>
+        <p>Highlights the block you are aiming at, in your own colour.</p>
+        <ul class="module-list">
+          <li>Border or full-block fill</li>
+          <li>Thickness and fill opacity</li>
+          <li>Full colour picker</li>
+        </ul>
+      </article>
+
+      <article class="card module" data-cat="VISUAL" data-name="custom break animation">
+        <div class="module-top"><h3>Custom Break Animation</h3><span class="tag">Visual</span></div>
+        <p>A mining animation you can actually see, drawn on the block you are breaking.</p>
+        <ul class="module-list">
+          <li>Classic, Neon, Minimal, Pulse or Smooth presets</li>
+          <li>Camera-facing progress bar above the block</li>
+          <li>Colour, smoothing and bar width</li>
+        </ul>
+      </article>
+
+      <article class="card module" data-cat="VISUAL" data-name="fullbright">
+        <div class="module-top"><h3>Fullbright</h3><span class="tag">Visual</span></div>
+        <p>Raises the light level your client sees, so dark areas stay readable.</p>
+        <ul class="module-list"><li>Adjustable brightness</li></ul>
+      </article>
+
+      <article class="card module" data-cat="VISUAL" data-name="no particles">
+        <div class="module-top"><h3>No Particles</h3><span class="tag">Visual</span></div>
+        <p>Fewer particles, including the fragments from breaking blocks.</p>
+        <ul class="module-list">
+          <li>Minimal or Decreased level</li>
+          <li>Block-break particles filtered at the particle engine</li>
+        </ul>
+      </article>
+
+      <article class="card module" data-cat="VISUAL" data-name="no dropped items">
+        <div class="module-top"><h3>No Dropped Items</h3><span class="tag">Visual</span></div>
+        <p>Hides dropped item entities on your screen without touching the world.</p>
+        <ul class="module-list"><li>Optional radius</li></ul>
+      </article>
+
+      <article class="card module" data-cat="DONUTSMP" data-name="anti leaker">
+        <div class="module-top"><h3>Anti Leaker</h3><span class="tag">Visual</span></div>
+        <p>Generates a small resource pack that repaints leaky blocks with the netherite texture, so
+           you can see what you are looking at underground.</p>
+        <ul class="module-list">
+          <li>Deepslate family, tuff family, gravel and bedrock</li>
+          <li>Optional deepslate ores and the whole stone family</li>
+          <li>Writes the pack, enables it and reloads for you</li>
+        </ul>
+      </article>
+
+      <article class="card module" data-cat="MOVEMENT" data-name="free look">
+        <div class="module-top"><h3>Free Look</h3><span class="tag">Visual</span></div>
+        <p>Turn your view without turning your body, and see it in third person.</p>
+        <ul class="module-list">
+          <li>Sensitivity, vertical lock and perspective choice</li>
+          <li>Camera passes through walls instead of being yanked in</li>
+          <li>Restores your view when switched off</li>
+        </ul>
+      </article>
+
+      <article class="card module" data-cat="MOVEMENT" data-name="free cam">
+        <div class="module-top"><h3>Free Cam</h3><span class="tag">Visual</span></div>
+        <p>Detaches the camera and flies it around the world.</p>
+        <ul class="module-list">
+          <li>WASD to move, space and shift for up and down</li>
+          <li>Speed control, hold control to go faster</li>
+          <li>Your character stays exactly where it was</li>
+        </ul>
+      </article>
+
+      <article class="card module" data-cat="VISUAL" data-name="zoom">
+        <div class="module-top"><h3>Zoom</h3><span class="tag">Visual</span></div>
+        <p>Narrows your field of view while the module is on.</p>
+        <ul class="module-list"><li>Adjustable amount</li></ul>
+      </article>
+
+      <article class="card module" data-cat="MOVEMENT" data-name="snap turn">
+        <div class="module-top"><h3>Snap Turn</h3><span class="tag">Misc</span></div>
+        <p>Arrow keys snap the camera to exact angles instead of smooth turning.</p>
+        <ul class="module-list">
+          <li>Left and right snap your turn to 45, 90, 135 or 180</li>
+          <li>Up and down snap your view up and down to exact angles</li>
+          <li>Invert, level pitch, and turn-around mode</li>
+        </ul>
+      </article>
+
+      <article class="card module" data-cat="MOVEMENT" data-name="auto walk">
+        <div class="module-top"><h3>Auto Walk</h3><span class="tag">Misc</span></div>
+        <p>Keeps a movement key held so you do not have to hold it.</p>
+        <ul class="module-list">
+          <li>Straight, left, right or backward</li>
+          <li>Always sprint option</li>
+        </ul>
+      </article>
+
+      <article class="card module" data-cat="MISC" data-name="click holder">
+        <div class="module-top"><h3>Click Holder</h3><span class="tag">Misc</span></div>
+        <p>Keeps a mouse button held down for you.</p>
+        <ul class="module-list">
+          <li>Hold left click, hold right click, or both</li>
+          <li>One press then a held state, not a repeating clicker</li>
+          <li>Releases when a menu opens so inventory clicks still work</li>
+        </ul>
+      </article>
+
+      <article class="card module" data-cat="MISC" data-name="auto villager trader">
+        <div class="module-top"><h3>Auto Villager Trader</h3><span class="tag">Misc</span></div>
+        <p>Open a villager yourself and it does the trading for you.</p>
+        <ul class="module-list">
+          <li>Only acts while a villager screen is open</li>
+          <li>Delay between trades and a maximum trade count</li>
+          <li>First offer only, so it stops after a single purchase</li>
+        </ul>
+      </article>
+
+    </div>
+    <p class="empty" id="empty" hidden>No modules match that search.</p>
+  </section>
+
+  <section id="licence" class="section">
+    <div class="section-head">
+      <h2>Licence keys</h2>
+      <p>How access to the client works, and what it does and does not protect you against.</p>
+    </div>
+
+    <div class="grid grid-2">
+      <article class="card">
+        <h3>Plans</h3>
+        <ul class="plan-list">
+          <li><strong>1 Day</strong><span>24 hours from first launch</span></li>
+          <li><strong>1 Week</strong><span>7 days</span></li>
+          <li><strong>1 Month</strong><span>30 days</span></li>
+          <li><strong>Permanent</strong><span>Never expires</span></li>
+        </ul>
+      </article>
+      <article class="card">
+        <h3>How a key is used</h3>
+        <p>Paste it into the activation screen with <kbd>Insert</kbd> or <code>/utilitykey</code>.
+           The client then asks the key server whether it is valid, and caches the answer for
+           six hours so it does not phone home on every launch.</p>
+        <p>You are offline-proof for 72 hours. If the key server is unreachable the client keeps
+           running on your last verified check, so a server problem never locks you out of your
+           own game.</p>
+      </article>
+      <article class="card">
+        <h3>Your profile card</h3>
+        <p>The card at the bottom left of the menu shows your plan and how long is left on it. A
+           green dot means the key is verified. Clicking the card takes you back to the
+           activation screen to change or remove the key.</p>
+      </article>
+      <article class="card">
+        <h3>What a key does not stop</h3>
+        <p>This is worth being blunt about. The mod runs on your own machine, so anyone
+           determined can patch the check out of the jar. A key stops casual sharing and casual
+           piracy, which is the overwhelming majority of it. It is not unbreakable DRM, and it
+           should not be sold as though it is.</p>
+      </article>
+    </div>
+  </section>
+
+  <section id="install" class="section section-alt">
+    <div class="section-head">
+      <h2>Installing</h2>
+      <p>Client only. Nothing goes on the server.</p>
+    </div>
+
+    <div class="install">
+      <div class="req">
+        <h3>Requirements</h3>
+        <ul>
+          <li>Minecraft <strong>26.2</strong></li>
+          <li>Fabric Loader <strong>0.19.5</strong> or newer</li>
+          <li>Fabric API <strong>0.161.0+26.2</strong></li>
+          <li>Java <strong>25</strong> or newer</li>
+        </ul>
+      </div>
+      <div class="steps">
+        <h3>Steps</h3>
+        <ol>
+          <li>Install Fabric Loader and Fabric API for Minecraft 26.2.</li>
+          <li>Drop <code>utility-client-0.1.0.jar</code> into your profile's <code>mods</code> folder.</li>
+          <li>Launch Minecraft and press <kbd>Insert</kbd>. Paste your key when asked.</li>
+        </ol>
+        <div class="path-box">
+          <code id="pathText">%APPDATA%\.minecraft\installations\&lt;profile&gt;\mods\</code>
+          <button class="btn btn-sm" id="copyPath" type="button">Copy</button>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <section id="controls" class="section section-alt">
+    <div class="section-head">
+      <h2>Controls</h2>
+      <p>Getting around the menu.</p>
+    </div>
+    <div class="grid grid-2">
+      <article class="card">
+        <h3>Opening and toggling</h3>
+        <ul class="keys">
+          <li><kbd>Insert</kbd><span>Open the menu, or the key screen if unlicensed</span></li>
+          <li><code>/utility</code><span>Open the menu from chat</span></li>
+          <li><code>/utilitykey</code><span>Open the key screen directly</span></li>
+          <li><kbd>Left click</kbd><span>Toggle a module card</span></li>
+          <li><kbd>Right click</kbd><span>Open that module's settings</span></li>
+          <li><kbd>Esc</kbd><span>Close a menu</span></li>
+        </ul>
+      </article>
+      <article class="card">
+        <h3>Inside a module's settings</h3>
+        <ul class="keys">
+          <li><kbd>Click</kbd><span>Pick a value with the − and + buttons</span></li>
+          <li><kbd>Click</kbd><span>Open the colour picker on a swatch</span></li>
+          <li><kbd>Click</kbd><span>Start listening, then press a key or mouse button</span></li>
+          <li><kbd>Delete</kbd><span>Clear a keybind while listening</span></li>
+          <li><kbd>Scroll</kbd><span>Move through a long settings list</span></li>
+        </ul>
+      </article>
+    </div>
+    <div class="callout">
+      <h3>Config file</h3>
+      <p>Module states, every setting and every keybind are stored in
+        <code>config/utility-client.json</code>. The Configs tab in the sidebar can save, reload
+        or reset everything back to defaults.</p>
+    </div>
+  </section>
+
+  <section id="scope" class="section">
+    <div class="section-head">
+      <h2>What it deliberately does not do</h2>
+      <p>Being clear about this up front saves everyone time.</p>
+    </div>
+    <div class="grid grid-2 no-grid">
+      <div class="no-item"><span>✕</span>Combat automation</div>
+      <div class="no-item"><span>✕</span>X-ray or ore detection</div>
+      <div class="no-item"><span>✕</span>Reach or aim assist</div>
+      <div class="no-item"><span>✕</span>Packet spoofing</div>
+      <div class="no-item"><span>✕</span>Anti-cheat bypasses</div>
+      <div class="no-item"><span>✕</span>Automated mining or block automation</div>
+    </div>
+    <p class="fine">
+      Where a module repeats an input for you, such as the click holder or the villager trader, it
+      is capped, clearly labelled, and never acts on its own without you being there.
+    </p>
+  </section>
+
+</main>
+
+<footer class="footer">
+  <div class="footer-inner">
+    <div>
+      <span class="brand-mark small">U</span>
+      <p>Utility Client — a client-side QoL and visual mod for Minecraft 26.2.</p>
+    </div>
+    <div class="footer-links">
+      <a href="#features">Features</a>
+      <a href="#modules">Modules</a>
+      <a href="#install">Install</a>
+      <a href="#controls">Controls</a>
+    </div>
+  </div>
+  <p class="fine">Not an official Minecraft product. Requires Minecraft 26.2 and Fabric.</p>
+</footer>
+
+<!-- Admin panel. Shown instead of the page when the URL ends in #admin. -->
+<script src="script.js"></script>
+<div class="admin" id="adminApp" hidden>
+
+  <section class="admin-gate" id="adminGate">
+    <div class="admin-card">
+      <span class="brand-mark">U</span>
+      <h2>Admin</h2>
+      <p class="fine">This area issues licence keys for the client.</p>
+      <label class="field">
+        <span>Password</span>
+        <input id="adminPass" type="password" placeholder="Enter password" autocomplete="off">
+      </label>
+      <p class="admin-msg" id="adminMsg" role="alert"></p>
+      <div class="admin-actions">
+        <button class="btn" id="adminUnlock" type="button">Unlock</button>
+        <a class="btn btn-ghost" href="#top">Back to site</a>
+      </div>
+      <p class="fine admin-note">
+        This password only hides the panel. The keys themselves are protected by the admin
+        token on the key server, so the password is not the thing keeping your keys safe.
+      </p>
+    </div>
+  </section>
+
+  <section class="admin-dash" id="adminDash" hidden>
+    <div class="admin-head">
+      <div>
+        <h2>Key admin</h2>
+        <p class="fine" id="adminStatus">Not connected.</p>
+      </div>
+      <div class="admin-head-actions">
+        <button class="btn btn-sm btn-ghost" id="adminRefresh" type="button">Refresh</button>
+        <button class="btn btn-sm btn-ghost" id="adminExport" type="button">Export JSON</button>
+        <button class="btn btn-sm btn-ghost" id="adminLock" type="button">Lock</button>
+        <a class="btn btn-sm" href="#top">Back to site</a>
+      </div>
+    </div>
+
+    <div class="admin-card admin-connect">
+      <label class="field">
+        <span>Key server URL</span>
+        <input id="apiUrl" type="url" placeholder="https://your-worker.workers.dev">
+      </label>
+      <label class="field">
+        <span>Admin token</span>
+        <input id="apiToken" type="password" placeholder="ADMIN_TOKEN secret" autocomplete="off">
+      </label>
+      <div class="admin-actions">
+        <button class="btn" id="apiSave" type="button">Save and connect</button>
+      </div>
+      <p class="fine">
+        The token is kept in this tab only, and is cleared the moment you close it.
+        The URL is remembered for next time.
+      </p>
+    </div>
+
+    <h3 class="admin-sub">Generate keys</h3>
+    <div class="tier-grid">
+      <button class="tier" data-tier="DAY" type="button">
+        <strong>1 Day</strong><span>24 hours</span>
+      </button>
+      <button class="tier" data-tier="WEEK" type="button">
+        <strong>1 Week</strong><span>7 days</span>
+      </button>
+      <button class="tier" data-tier="MONTH" type="button">
+        <strong>1 Month</strong><span>30 days</span>
+      </button>
+      <button class="tier" data-tier="PERMANENT" type="button">
+        <strong>Permanent</strong><span>Never expires</span>
+      </button>
+    </div>
+
+    <div class="admin-card">
+      <div class="gen-row">
+        <label class="field">
+          <span>How many</span>
+          <input id="genCount" type="number" min="1" max="50" value="1">
+        </label>
+        <label class="field grow">
+          <span>Note (optional)</span>
+          <input id="genNote" type="text" maxlength="120" placeholder="who it is for">
+        </label>
+        <button class="btn" id="genGo" type="button">Generate</button>
+      </div>
+      <div class="gen-out" id="genOut" hidden>
+        <div class="gen-out-head">
+          <strong id="genCountLabel">Generated</strong>
+          <div class="admin-actions">
+            <button class="btn btn-sm btn-ghost" id="genCopyAll" type="button">Copy all</button>
+          </div>
+        </div>
+        <div class="key-list" id="genKeys"></div>
+      </div>
+    </div>
+
+    <h3 class="admin-sub">All keys <span class="pill-count" id="allCount">0</span></h3>
+    <div class="admin-card table-wrap">
+      <table class="keys-table">
+        <thead>
+          <tr>
+            <th>Key</th><th>Tier</th><th>State</th><th>Note</th><th>Expires</th><th>Seen</th><th></th>
+          </tr>
+        </thead>
+        <tbody id="allRows"></tbody>
+      </table>
+      <p class="fine" id="allEmpty" hidden>No keys yet. Generate one above.</p>
+    </div>
+  </section>
+</div>
+
+<script src="admin.js"></script>
+</body>
+</html>

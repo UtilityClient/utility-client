@@ -1,0 +1,27 @@
+# Gradle
+.gradle/
+build/
+out/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Fabric
+run/
+remappedSrc/
+
+# Never commit real keys or tokens
+*.env
+.env
+secrets.json
+worker/.dev.vars
+
+# OS clutter
+$RECYCLE.BIN/
+*.lnk
