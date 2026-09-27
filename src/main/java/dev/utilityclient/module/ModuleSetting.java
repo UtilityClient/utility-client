@@ -9,7 +9,8 @@ public final class ModuleSetting<T> {
         INTEGER,
         DOUBLE,
         MODE,
-        COLOR
+        COLOR,
+        STRING
     }
 
     private final String id;
@@ -54,6 +55,14 @@ public final class ModuleSetting<T> {
     public static ModuleSetting<String> modeSetting(String id, String name, String description,
                                                      String value, String... options) {
         return new ModuleSetting<>(id, name, description, Type.MODE, value, List.of(options), 0, 0, 0);
+    }
+
+    /**
+     * Free text, edited in the settings screen. Used where a fixed list of choices would be
+     * wrong, such as a server specific chat command.
+     */
+    public static ModuleSetting<String> stringSetting(String id, String name, String description, String value) {
+        return new ModuleSetting<>(id, name, description, Type.STRING, value, List.of(), 0, 0, 0);
     }
 
     /**

@@ -4,6 +4,7 @@ import dev.utilityclient.config.ConfigManager;
 import dev.utilityclient.module.ModuleManager;
 import dev.utilityclient.module.impl.AntiLeakerModule;
 import dev.utilityclient.module.impl.AutoTradeModule;
+import dev.utilityclient.module.impl.AutoBuilderModule;
 import dev.utilityclient.module.impl.AutoWalkModule;
 import dev.utilityclient.module.impl.BlockHighlightModule;
 import dev.utilityclient.module.impl.ClickHolderModule;
@@ -50,6 +51,7 @@ public final class ModuleManager {
         instance.register(new AutoWalkModule());
         instance.register(new ClickHolderModule());
         instance.register(new AutoTradeModule());
+        instance.register(new AutoBuilderModule());
         instance.register(new AntiLeakerModule());
         instance.register(new FreeLookModule());
         instance.register(new FreeCamModule());

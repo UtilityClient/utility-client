@@ -6,6 +6,7 @@ import dev.utilityclient.module.ModuleSetting;
 import dev.utilityclient.module.impl.HudModule;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.CharacterEvent;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
@@ -42,6 +43,10 @@ public final class ModuleSettingsScreen extends Screen {
 
     private String dragSettingId;
     private boolean dragHue;
+
+    // Free text setting currently being edited, for the STRING type.
+    private String editingSettingId;
+    private String textBuffer = "";
 
     public ModuleSettingsScreen(Module module) {
         super(Component.literal(module.displayName() + " settings"));
@@ -128,11 +133,58 @@ public final class ModuleSettingsScreen extends Screen {
         for (SettingRow row : layout.rows) {
             if (row.color != null) {
                 drawColorRow(graphics, mouseX, mouseY, row);
+            } else if (row.setting.type() == ModuleSetting.Type.STRING) {
+                drawTextRow(graphics, mouseX, mouseY, row);
             } else {
                 drawValueRow(graphics, mouseX, mouseY, row);
             }
         }
         graphics.disableScissor();
+    }
+
+    /**
+     * Free text setting. Clicking focuses the box, typing edits it, Enter commits it and
+     * Esc abandons the edit. Used for things like a server specific chat command where a
+     * fixed list of options would be wrong.
+     */
+    private void drawTextRow(GuiGraphicsExtractor graphics, int mouseX, int mouseY, SettingRow row) {
+        boolean hovered = inside(mouseX, mouseY, row.x, row.y, row.width, row.height);
+        roundPanel(graphics, row.x, row.y, row.width, row.height, 9,
+                hovered ? 0xFF1E1A28 : PANEL, hovered ? PURPLE_DIM : BORDER);
+        graphics.text(font, row.setting.name(), row.x + 14, row.y + 12, TEXT, false);
+
+        boolean editing = editingSettingId != null && editingSettingId.equals(row.setting.id());
+        int fieldX = row.x + 14;
+        int fieldWidth = row.width - 28;
+        int fieldY = row.y + 30;
+        int fieldHeight = 20;
+
+        roundPanel(graphics, fieldX, fieldY, fieldWidth, fieldHeight, 6,
+                editing ? 0xFF101018 : 0xFF14141C, editing ? PURPLE : BORDER);
+
+        String value = editing ? textBuffer : String.valueOf(row.setting.value());
+        if (value.isEmpty()) {
+            value = "not set";
+        }
+        // Show the tail, so a long command keeps its most meaningful part visible.
+        String shown = value;
+        while (shown.length() > 2 && font.width(shown) > fieldWidth - 16) {
+            shown = shown.substring(1);
+        }
+        if (!shown.equals(value)) {
+            shown = "..." + shown;
+        }
+        graphics.text(font, shown, fieldX + 8, fieldY + 6,
+                editing ? TEXT : (value.equals("not set") ? DIM : MUTED), false);
+
+        if (editing && (System.currentTimeMillis() / 500L) % 2L == 0L) {
+            int caretX = fieldX + 8 + font.width(shown) + 1;
+            if (caretX < fieldX + fieldWidth - 4) {
+                graphics.fill(caretX, fieldY + 5, caretX + 1, fieldY + fieldHeight - 5, PURPLE);
+            }
+        }
+        graphics.text(font, editing ? "Enter saves, Esc cancels" : row.setting.description(),
+                row.x + 14, row.y + row.height - 14, editing ? PURPLE_DIM : DIM, false);
     }
 
     private void drawValueRow(GuiGraphicsExtractor graphics, int mouseX, int mouseY, SettingRow row) {
@@ -299,6 +351,12 @@ public final class ModuleSettingsScreen extends Screen {
                 }
                 return true;
             }
+            if (row.setting.type() == ModuleSetting.Type.STRING) {
+                editingSettingId = row.setting.id();
+                textBuffer = String.valueOf(row.setting.value());
+                module.onSettingsChanged();
+                return true;
+            }
             int controlX = row.x + row.width - 150;
             if (mouseX < controlX + 34) {
                 row.setting.adjust(-1);
@@ -396,11 +454,83 @@ public final class ModuleSettingsScreen extends Screen {
             }
             return true;
         }
+        if (editingSettingId != null) {
+            int code = event.key();
+            if (code == GLFW.GLFW_KEY_ESCAPE) {
+                // Abandon the edit and put the stored value back in the box.
+                textBuffer = valueOf(editingSettingId);
+                editingSettingId = null;
+                showMessage("Edit cancelled.", MUTED);
+                return true;
+            }
+            if (code == GLFW.GLFW_KEY_ENTER || code == GLFW.GLFW_KEY_KP_ENTER) {
+                commitText(editingSettingId);
+                editingSettingId = null;
+                return true;
+            }
+            if (code == GLFW.GLFW_KEY_BACKSPACE) {
+                if (!textBuffer.isEmpty()) {
+                    textBuffer = textBuffer.substring(0, textBuffer.length() - 1);
+                }
+                return true;
+            }
+            if (code == GLFW.GLFW_KEY_V && (event.modifiers() & GLFW.GLFW_MOD_CONTROL) != 0) {
+                pasteIntoBuffer();
+                return true;
+            }
+            return true;
+        }
         if (event.key() == GLFW.GLFW_KEY_INSERT || event.key() == GLFW.GLFW_KEY_ESCAPE) {
             minecraft.gui.setScreen(new ClickGuiScreen());
             return true;
         }
         return super.keyPressed(event);
+    }
+
+    @Override
+    public boolean charTyped(CharacterEvent event) {
+        if (editingSettingId != null) {
+            if (event.isAllowedChatCharacter() && textBuffer.length() < 120) {
+                textBuffer += event.codepointAsString();
+            }
+            return true;
+        }
+        return super.charTyped(event);
+    }
+
+    private String valueOf(String settingId) {
+        for (SettingRow row : layout.rows) {
+            if (row.setting.id().equals(settingId)) {
+                return String.valueOf(row.setting.value());
+            }
+        }
+        return "";
+    }
+
+    @SuppressWarnings("unchecked")
+    private void commitText(String settingId) {
+        for (SettingRow row : layout.rows) {
+            if (!row.setting.id().equals(settingId)) {
+                continue;
+            }
+            ((ModuleSetting<String>) row.setting).set(textBuffer);
+            module.onSettingsChanged();
+            ConfigManager.save();
+            showMessage(row.setting.name() + " saved.", MUTED);
+            return;
+        }
+    }
+
+    private void pasteIntoBuffer() {
+        try {
+            String clipboard = minecraft.keyboardHandler.getClipboard();
+            if (clipboard != null && !clipboard.isEmpty()) {
+                textBuffer = (textBuffer + clipboard.replaceAll("\\s+", " ")).substring(0,
+                        Math.min(120, textBuffer.length() + clipboard.length()));
+            }
+        } catch (RuntimeException ignored) {
+            // Clipboard can throw on some platforms, typing still works.
+        }
     }
 
     @Override
