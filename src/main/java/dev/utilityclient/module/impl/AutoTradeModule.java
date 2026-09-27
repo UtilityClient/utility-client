@@ -47,7 +47,6 @@ public final class AutoTradeModule extends Module {
     public final ModuleSetting<Boolean> closeWhenDone;
     public final ModuleSetting<Boolean> showStatus;
     public final ModuleSetting<Boolean> tradeWhileFull;
-    public final ModuleSetting<Boolean> topUpPayment;
 
     private static Field tradeContainerField;
     private static boolean reflectionWarned;
@@ -78,9 +77,6 @@ public final class AutoTradeModule extends Module {
                 "Print a line in chat when it finishes.", true));
         tradeWhileFull = addSetting(ModuleSetting.booleanSetting("full-inventory", "Trade when full",
                 "Keep going even if your inventory cannot fit another result.", true));
-        topUpPayment = addSetting(ModuleSetting.booleanSetting("top-up", "Refill payment slot",
-                "Move the payment item from your inventory into the trade slot when it empties, "
-                        + "so the trade can repeat without you doing it.", true));
     }
 
     @Override
@@ -144,15 +140,6 @@ public final class AutoTradeModule extends Module {
             return;
         }
 
-        // A trade needs the payment in the slot. Without this it would fire once, stall, and
-        // eventually time out, because the server has nothing to charge.
-        if (topUpPayment.value() && !paymentInSlot(menu, active)) {
-            if (movePaymentFromInventory(client, menu, active)) {
-                cooldown = Math.max(2, delay.value() / 2);
-                return;
-            }
-        }
-
         int resultSlot = findResultSlot(menu);
         if (resultSlot < 0) {
             // Should not happen in a real merchant window. Give up rather than click blind.
@@ -160,14 +147,37 @@ public final class AutoTradeModule extends Module {
             return;
         }
 
-        // QUICK_MOVE is the one that actually completes a trade. PICKUP is a cursor action
-        // and would lift the result onto the cursor instead of trading for it, which is what
-        // made an earlier build look like it was stealing the payment.
+        // Only ever click when the server has actually put a result in the slot, which only
+        // happens once the payment is present and the trade is genuinely available. Clicking
+        // blind is what made an earlier build eat the payment instead of trading.
+        if (!resultIsOffered(menu, resultSlot)) {
+            idleTicks++;
+            if (idleTicks >= idleTimeout.value()) {
+                finish(client, "No trade became available - out of payment, or the offer is gone");
+            }
+            return;
+        }
+
+        // A plain left click, the same one a player makes on the result slot. Nothing here
+        // touches the payment slots or the inventory any more.
         client.gameMode.handleContainerInput(menu.containerId, resultSlot, 0,
-                ContainerInput.QUICK_MOVE, client.player);
+                ContainerInput.PICKUP, client.player);
         trades++;
         cooldown = delay.value();
         idleTicks = 0;
+    }
+
+    /**
+     * True when the result slot is holding something, which the server only does once a
+     * trade can actually be made.
+     */
+    private static boolean resultIsOffered(MerchantMenu menu, int resultSlot) {
+        try {
+            net.minecraft.world.inventory.Slot slot = menu.getSlot(resultSlot);
+            return slot != null && !slot.getItem().isEmpty();
+        } catch (RuntimeException exception) {
+            return false;
+        }
     }
 
     /**
@@ -187,73 +197,6 @@ public final class AutoTradeModule extends Module {
             return 0;
         }
         return menu.slots.isEmpty() ? -1 : 0;
-    }
-
-    /** True when the payment item for this offer is sitting in one of the payment slots. */
-    private static boolean paymentInSlot(MerchantMenu menu, MerchantOffer offer) {
-        net.minecraft.world.item.Item payment = paymentItem(offer);
-        if (payment == null) {
-            return false;
-        }
-        // The two payment slots are the only ones beside the result, at 75,47 and 75,65.
-        for (int index = 0; index < menu.slots.size(); index++) {
-            try {
-                net.minecraft.world.inventory.Slot slot = menu.getSlot(index);
-                if (slot == null || slot.x != 75) {
-                    continue;
-                }
-                if (!slot.getItem().isEmpty() && slot.getItem().getItem() == payment) {
-                    return true;
-                }
-            } catch (RuntimeException exception) {
-                return false;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Shift-clicks the payment item out of the inventory and into the trade slot. The
-     * merchant menu routes a quick move on a matching inventory item into the payment slot,
-     * which is the same thing a player does by hand.
-     */
-    private static boolean movePaymentFromInventory(Minecraft client, MerchantMenu menu,
-                                                    MerchantOffer offer) {
-        net.minecraft.world.item.Item payment = paymentItem(offer);
-        if (payment == null) {
-            return false;
-        }
-        int playerSlots = client.player.getInventory().getContainerSize();
-        int firstPlayerSlot = menu.slots.size() - playerSlots;
-        if (firstPlayerSlot <= 0) {
-            return false;
-        }
-        for (int index = firstPlayerSlot; index < menu.slots.size(); index++) {
-            try {
-                net.minecraft.world.inventory.Slot slot = menu.getSlot(index);
-                if (slot == null) {
-                    continue;
-                }
-                if (slot.getItem().isEmpty() || slot.getItem().getItem() != payment) {
-                    continue;
-                }
-                client.gameMode.handleContainerInput(menu.containerId, index, 0,
-                        ContainerInput.QUICK_MOVE, client.player);
-                return true;
-            } catch (RuntimeException exception) {
-                return false;
-            }
-        }
-        return false;
-    }
-
-    /** The item the villager wants, or null if the offer has no simple cost. */
-    private static net.minecraft.world.item.Item paymentItem(MerchantOffer offer) {
-        try {
-            return offer.getItemCostA().itemStack().getItem();
-        } catch (RuntimeException exception) {
-            return null;
-        }
     }
 
     /* ---------------------------------------------------------------- state */
