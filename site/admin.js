@@ -66,10 +66,14 @@
     passInput.focus();
   }
 
+  // The deployed key server, so the URL does not have to be pasted every session. The
+  // field stays editable in case the Worker ever moves.
+  var DEFAULT_API_URL = "https://utilityclient-keys.utilityclient.workers.dev";
+
   function showDash() {
     gate.hidden = true;
     dash.hidden = false;
-    apiUrl.value = localStorage.getItem(URL_STORE) || "";
+    apiUrl.value = localStorage.getItem(URL_STORE) || DEFAULT_API_URL;
     apiToken.value = sessionStorage.getItem(TOKEN_STORE) || "";
     if (apiUrl.value && apiToken.value) {
       refresh();
