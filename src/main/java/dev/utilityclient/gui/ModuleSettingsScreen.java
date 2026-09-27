@@ -16,6 +16,7 @@ import org.lwjgl.glfw.GLFW;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Set;
 
 public final class ModuleSettingsScreen extends Screen {
@@ -195,6 +196,31 @@ public final class ModuleSettingsScreen extends Screen {
         graphics.text(font, row.setting.description(), row.x + 14, row.y + 32, MUTED, false);
 
         int controlX = row.x + row.width - 150;
+
+        // While a number is being typed, the value box becomes a text field in place, so
+        // typing a large value does not mean holding plus forever.
+        if (isEditing(row)) {
+            int boxX = controlX + 34;
+            int boxWidth = 116;
+            roundRect(graphics, boxX, row.y + 18, boxWidth, 28, 7, 0xFF101018);
+            graphics.outline(boxX, row.y + 18, boxWidth, 28, PURPLE);
+
+            String shown = textBuffer;
+            while (shown.length() > 1 && font.width(shown) > boxWidth - 12) {
+                shown = shown.substring(1);
+            }
+            graphics.text(font, shown, boxX + 6, row.y + 27, TEXT, false);
+            if ((System.currentTimeMillis() / 500L) % 2L == 0L) {
+                int caretX = boxX + 6 + font.width(shown);
+                if (caretX < boxX + boxWidth - 4) {
+                    graphics.fill(caretX, row.y + 24, caretX + 1, row.y + 40, PURPLE);
+                }
+            }
+            graphics.text(font, "Enter saves, Esc cancels", row.x + 14,
+                    row.y + row.height - 14, PURPLE_DIM, false);
+            return;
+        }
+
         roundRect(graphics, controlX, row.y + 18, 26, 28, 7, TRACK);
         graphics.text(font, "-", controlX + 10, row.y + 27, MUTED, false);
         roundRect(graphics, controlX + 34, row.y + 18, 82, 28, 7, 0xFF23232E);
@@ -204,6 +230,16 @@ public final class ModuleSettingsScreen extends Screen {
                         ? PURPLE : TEXT, false);
         roundRect(graphics, controlX + 124, row.y + 18, 26, 28, 7, TRACK);
         graphics.text(font, "+", controlX + 134, row.y + 27, MUTED, false);
+
+        // A small hint that the value can be typed, on the rows that accept numbers.
+        if (row.setting.type() == ModuleSetting.Type.INTEGER) {
+            graphics.text(font, "or click the number to type", row.x + 14,
+                    row.y + row.height - 14, MUTED, false);
+        }
+    }
+
+    private boolean isEditing(SettingRow row) {
+        return editingSettingId != null && editingSettingId.equals(row.setting.id());
     }
 
     @SuppressWarnings("unchecked")
@@ -358,6 +394,14 @@ public final class ModuleSettingsScreen extends Screen {
                 return true;
             }
             int controlX = row.x + row.width - 150;
+            // Clicking the number itself types a value, which is far quicker than holding
+            // plus on a cap that might be six figures.
+            if (row.setting.type() == ModuleSetting.Type.INTEGER
+                    && inside(mouseX, mouseY, controlX + 34, row.y + 18, 82, 28)) {
+                editingSettingId = row.setting.id();
+                textBuffer = "";
+                return true;
+            }
             if (mouseX < controlX + 34) {
                 row.setting.adjust(-1);
             } else {
@@ -457,8 +501,7 @@ public final class ModuleSettingsScreen extends Screen {
         if (editingSettingId != null) {
             int code = event.key();
             if (code == GLFW.GLFW_KEY_ESCAPE) {
-                // Abandon the edit and put the stored value back in the box.
-                textBuffer = valueOf(editingSettingId);
+                // Abandon the edit. The stored value was never touched, so nothing to undo.
                 editingSettingId = null;
                 showMessage("Edit cancelled.", MUTED);
                 return true;
@@ -472,6 +515,11 @@ public final class ModuleSettingsScreen extends Screen {
                 if (!textBuffer.isEmpty()) {
                     textBuffer = textBuffer.substring(0, textBuffer.length() - 1);
                 }
+                return true;
+            }
+            if (code == GLFW.GLFW_KEY_A && (event.modifiers() & GLFW.GLFW_MOD_CONTROL) != 0) {
+                // Select all behaves as clear, which is what anyone expects here.
+                textBuffer = "";
                 return true;
             }
             if (code == GLFW.GLFW_KEY_V && (event.modifiers() & GLFW.GLFW_MOD_CONTROL) != 0) {
@@ -513,11 +561,61 @@ public final class ModuleSettingsScreen extends Screen {
             if (!row.setting.id().equals(settingId)) {
                 continue;
             }
-            ((ModuleSetting<String>) row.setting).set(textBuffer);
+            ModuleSetting<?> setting = row.setting;
+
+            if (setting.type() == ModuleSetting.Type.INTEGER) {
+                Integer parsed = parseInt(textBuffer);
+                if (parsed == null) {
+                    // A blank or nonsensical box should not silently become zero, which for a
+                    // spend cap would be the same as removing it.
+                    showMessage("\"" + textBuffer + "\" is not a number. Keeping "
+                            + setting.displayValue() + ".", RED);
+                    return;
+                }
+                ((ModuleSetting<Integer>) setting).set(parsed);
+                showMessage(setting.name() + " set to " + setting.displayValue()
+                        + (setting.displayValue().equals(String.valueOf(parsed)) ? "" : " (clamped)"), MUTED);
+            } else if (setting.type() == ModuleSetting.Type.DOUBLE) {
+                try {
+                    ((ModuleSetting<Double>) setting).set(Double.parseDouble(textBuffer.trim()));
+                } catch (NumberFormatException exception) {
+                    showMessage("\"" + textBuffer + "\" is not a number. Keeping "
+                            + setting.displayValue() + ".", RED);
+                    return;
+                }
+                showMessage(setting.name() + " set to " + setting.displayValue(), MUTED);
+            } else {
+                ((ModuleSetting<String>) setting).set(textBuffer);
+                showMessage(setting.name() + " saved.", MUTED);
+            }
+
             module.onSettingsChanged();
             ConfigManager.save();
-            showMessage(row.setting.name() + " saved.", MUTED);
             return;
+        }
+    }
+
+    /** Accepts a plain integer, or a value typed with underscores or a k/m suffix. */
+    private Integer parseInt(String raw) {
+        if (raw == null) {
+            return null;
+        }
+        String cleaned = raw.trim().toLowerCase(Locale.ROOT).replace("_", "").replace(",", "");
+        long multiplier = 1L;
+        if (cleaned.endsWith("k")) {
+            multiplier = 1_000L;
+            cleaned = cleaned.substring(0, cleaned.length() - 1);
+        } else if (cleaned.endsWith("m")) {
+            multiplier = 1_000_000L;
+            cleaned = cleaned.substring(0, cleaned.length() - 1);
+        }
+        if (cleaned.isEmpty()) {
+            return null;
+        }
+        try {
+            return (int) (Long.parseLong(cleaned) * multiplier);
+        } catch (NumberFormatException exception) {
+            return null;
         }
     }
 
