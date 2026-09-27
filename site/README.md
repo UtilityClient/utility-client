@@ -9,11 +9,37 @@ across all of GitHub, so pick something like `utility-client`.
 
 ## One-time setup
 
-1. Create the repository on GitHub. **Do not** tick "Add a README", "Add .gitignore", or
-   "Choose a license" — an empty repo is what you want, so the first push is not a conflict.
-2. Set the Pages source. Repo → **Settings** → **Pages** → **Source: GitHub Actions**.
-   Without this the workflow runs but the deploy step fails.
-3. Push. The workflow publishes automatically.
+### 1. Create the repository
+
+On GitHub → **New repository**. Name it `utility-client` (or anything you like, it does not
+have to match the site name).
+
+**Leave all four initialisation boxes unticked.** An empty repository is what you want,
+otherwise the first push conflicts with GitHub's own README and licence files.
+
+### 2. Set the Pages source
+
+In your new repo → **Settings** → **Pages** → **Build and deployment** →
+**Source: GitHub Actions**.
+
+This step is easy to miss. Without it the workflow runs green but the deploy step fails.
+
+### 3. Push
+
+The repo is already initialised and committed locally, so from this folder:
+
+```powershell
+git remote add origin https://github.com/YOUR-USERNAME/utility-client.git
+git push -u origin main
+```
+
+GitHub will ask you to sign in. If it opens a browser and asks for a password, use your
+account password — but if you have 2FA on, it needs a **Personal Access Token** instead:
+GitHub → **Settings** → **Developer settings** → **Personal access tokens** → **Tokens
+(classic)** → **Generate new token** with the `repo` scope.
+
+Within about a minute the site is live at `https://YOUR-USERNAME.github.io`, and the admin
+panel at `https://YOUR-USERNAME.github.io/#admin`.
 
 ## Everyday use
 
