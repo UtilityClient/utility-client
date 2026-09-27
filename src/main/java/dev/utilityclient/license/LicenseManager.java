@@ -74,6 +74,9 @@ public final class LicenseManager {
     /** How long the client keeps working after the last successful check, if the API is down. */
     private static final long GRACE_MILLIS = Duration.ofHours(72).toMillis();
 
+    /** Hard ceiling on a single check, so the screen can never sit on "Checking..." forever. */
+    private static final long WATCHDOG_MILLIS = 20_000L;
+
     private static final Gson GSON = new GsonBuilder().setPrettyPrinting().create();
 
     private static final Object LOCK = new Object();
@@ -84,6 +87,7 @@ public final class LicenseManager {
     private static long expiresAt;
     private static long lastVerified;
     private static boolean checking;
+    private static long checkStartedAt;
     private static String detail = "No key entered";
 
     private LicenseManager() {
@@ -200,6 +204,7 @@ public final class LicenseManager {
             lastVerified = 0L;
             detail = "Checking...";
         }
+        log("checking key " + maskForLog(cleaned) + " against " + endpoint());
         validateNow();
         return true;
     }
@@ -226,6 +231,7 @@ public final class LicenseManager {
                 return;
             }
             checking = true;
+            checkStartedAt = System.currentTimeMillis();
             detail = "Checking...";
             currentKey = key;
         }
@@ -249,6 +255,19 @@ public final class LicenseManager {
     /** Called every client tick. Refreshes the cache when it has gone stale. */
     public static void tick() {
         Status current = status();
+
+        // Watchdog. The HTTP layer has its own timeouts, but a request can still wedge in
+        // ways those do not cover, and a licence screen stuck on "Checking..." forever is
+        // worse than being told the check failed.
+        if (current.checking() && checkStartedAt > 0L
+                && System.currentTimeMillis() - checkStartedAt > WATCHDOG_MILLIS) {
+            log("watchdog: the check had not returned after "
+                    + WATCHDOG_MILLIS + "ms, giving up on it");
+            fail("Timed out after " + (WATCHDOG_MILLIS / 1000) + "s", key());
+            checkStartedAt = 0L;
+            return;
+        }
+
         if (!current.checking() && !key().isEmpty() && isStale(current)) {
             validateNow();
         }
@@ -267,12 +286,15 @@ public final class LicenseManager {
     }
 
     private static Result probe(HttpRequest request) {
+        long started = System.currentTimeMillis();
         try (HttpClient client = HttpClient.newBuilder()
                 .connectTimeout(Duration.ofSeconds(8))
                 .followRedirects(HttpClient.Redirect.NORMAL)
                 .build()) {
 
             HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            log("key server replied HTTP " + response.statusCode() + " in "
+                    + (System.currentTimeMillis() - started) + "ms");
             if (response.statusCode() != 200) {
                 return new Result(false, false, Tier.NONE, 0L, "Key server replied " + response.statusCode());
             }
@@ -284,11 +306,15 @@ public final class LicenseManager {
             String message = optString(json, "message", valid ? "Licensed" : "Key not recognised");
             return new Result(true, valid, valid ? parsedTier : Tier.NONE, expiry, message);
         } catch (IOException exception) {
+            log("key server unreachable after " + (System.currentTimeMillis() - started) + "ms: "
+                    + exception.getClass().getSimpleName() + " - " + exception.getMessage());
             return new Result(false, false, Tier.NONE, 0L, "Offline - could not reach key server");
         } catch (InterruptedException exception) {
             Thread.currentThread().interrupt();
             return new Result(false, false, Tier.NONE, 0L, "Check interrupted");
         } catch (RuntimeException exception) {
+            log("unexpected failure talking to the key server: "
+                    + exception.getClass().getSimpleName() + " - " + exception.getMessage());
             return new Result(false, false, Tier.NONE, 0L, "Unexpected response from key server");
         }
     }
@@ -296,9 +322,11 @@ public final class LicenseManager {
     private static void applyResult(Result result, String requestedKey) {
         synchronized (LOCK) {
             checking = false;
+            checkStartedAt = 0L;
 
             // The user may have pasted a different key while this request was in flight.
             if (!requestedKey.equals(key)) {
+                log("ignoring a stale reply for " + maskForLog(requestedKey));
                 return;
             }
 
@@ -309,13 +337,18 @@ public final class LicenseManager {
                 if (result.valid()) {
                     lastVerified = System.currentTimeMillis();
                 }
+                log("reply: valid=" + result.valid() + " tier=" + result.tier()
+                        + " message=" + result.message());
             } else if (withinGrace()) {
                 // Keep the cached tier so the client still runs, but say what happened.
                 detail = "Offline - running on saved licence";
+                log("unreachable but inside the grace window, staying licensed: "
+                        + result.message());
             } else {
                 tier = Tier.NONE;
                 expiresAt = 0L;
                 detail = result.message();
+                log("unreachable and no grace left, staying locked: " + result.message());
             }
             saveLocked();
         }
@@ -386,6 +419,19 @@ public final class LicenseManager {
 
     private static String encode(String value) {
         return java.net.URLEncoder.encode(value, StandardCharsets.UTF_8);
+    }
+
+    /** Diagnostics go to the game log so a failed check can be read after the fact. */
+    private static void log(String message) {
+        System.out.println("[Utility Client] [licence] " + message);
+    }
+
+    /** Keys are masked in logs so a shared log file does not leak a working key. */
+    private static String maskForLog(String value) {
+        if (value == null || value.length() <= 6) {
+            return "****";
+        }
+        return "..." + value.substring(value.length() - 4);
     }
 
     private static String trimSlash(String value) {
