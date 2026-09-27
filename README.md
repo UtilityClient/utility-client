@@ -22,7 +22,7 @@ This project is intentionally focused on quality-of-life and visual features:
 - Snap Turn that snaps to exact angles (defaults to 90 degrees) on all four arrow keys
 - Auto Walk with straight, left, right and backward directions
 - Click Holder that keeps left or right mouse held down
-- Auto Villager Trader that trades once you open a villager yourself
+- Auto Villager Trader that trades the offer you click until that villager runs out
 - Free Look: camera turns without turning your body
 - Free Cam: detached camera you can fly around with
 - Zoom
@@ -138,7 +138,16 @@ unbreakable and should not be sold as though it is.
 
 ## Auto Villager Trader
 
-You open a villager's trade window yourself, and this module does the trading for you.
+Open a villager, click the trade you want, and it keeps trading that offer until the villager runs
+out of it. Then the window closes itself.
+
+It starts on the offer you clicked, not one it picked for you. Nothing happens until you select a
+trade, so it never trades something you did not choose.
+
+How it knows a trade is finished: a villager removes an exhausted offer from its list, so the list
+getting shorter is the signal. The offer's own out of stock flag is checked as a second opinion,
+but the list length is what it trusts, because the client can keep a stale reference to an offer
+the server has already removed.
 
 It is deliberately confined to the trade window:
 
@@ -146,12 +155,15 @@ It is deliberately confined to the trade window:
   a trade on its own
 - Each trade is the same click you would make on the result slot, through the normal container
   click handler
-- `Max trades` caps how many trades happen per villager, so one activation can never dump your
-  whole stack into a single trade
-- `Delay` spaces the trades out, and `First offer only` stops after a single trade
-- Reopening the villager resets the count
+- `Hard cap` stops after a set number of trades even if the villager still has stock. This is not
+  optional: a server villager that restocks would otherwise drain money indefinitely
+- `Stall timeout` stops if the offer count stops changing, which covers being unable to afford the
+  next trade
+- `Close when done` closes the window once the offer is used up
+- `Trade when full` off means it stops before your inventory cannot fit another result
 
-Settings: `Delay` (ticks between trades), `Max trades`, `First offer only`, `Show status`.
+Settings: `Delay`, `Hard cap`, `Stall timeout`, `Close when done`, `Trade when full`,
+`Show status`.
 
 ## Anti Leaker
 

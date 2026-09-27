@@ -257,11 +257,11 @@
 
       <article class="card module" data-cat="MISC" data-name="auto villager trader">
         <div class="module-top"><h3 data-edit="modules.auto villager trader.name" data-label="auto villager trader name">Auto Villager Trader</h3><span class="tag" data-edit="modules.auto villager trader.tag" data-label="auto villager trader tag">Misc</span></div>
-        <p data-edit="modules.auto villager trader.desc" data-label="auto villager trader description">Open a villager yourself and it does the trading for you.</p>
+        <p data-edit="modules.auto villager trader.desc" data-label="auto villager trader description">Click the trade you want and it keeps trading until that villager runs out.</p>
         <ul class="module-list">
-          <li data-edit="modules.auto villager trader.b0" data-label="auto villager trader bullet 1">Only acts while a villager screen is open</li>
-          <li data-edit="modules.auto villager trader.b1" data-label="auto villager trader bullet 2">Delay between trades and a maximum trade count</li>
-          <li data-edit="modules.auto villager trader.b2" data-label="auto villager trader bullet 3">First offer only, so it stops after a single purchase</li>
+          <li data-edit="modules.auto villager trader.b0" data-label="auto villager trader bullet 1">Starts on the offer you click, not one you picked for you</li>
+          <li data-edit="modules.auto villager trader.b1" data-label="auto villager trader bullet 2">Detects the offer running out, then closes the window</li>
+          <li data-edit="modules.auto villager trader.b2" data-label="auto villager trader bullet 3">Hard trade cap and a stall timeout, so it can never loop forever</li>
         </ul>
       </article>
 
