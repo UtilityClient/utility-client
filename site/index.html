@@ -12,18 +12,18 @@
 
 <header class="nav" id="nav">
   <a class="brand" href="#top">
-    <span class="brand-mark">U</span>
-    <span class="brand-text">Utility<em>Client</em></span>
+    <span class="brand-mark" data-logo>U</span>
+    <span class="brand-text"><span data-edit="brand.name" data-label="Brand name">Utility</span><em data-edit="brand.accent" data-label="Brand accent word">Client</em></span>
   </a>
   <nav class="nav-links" id="navLinks">
-    <a href="#features">Features</a>
-    <a href="#modules">Modules</a>
-    <a href="#install">Install</a>
-    <a href="#licence">Licence</a>
-    <a href="#controls">Controls</a>
+    <a href="#features" data-edit="nav.features" data-label="Nav link 1">Features</a>
+    <a href="#modules" data-edit="nav.modules" data-label="Nav link 2">Modules</a>
+    <a href="#install" data-edit="nav.install" data-label="Nav link 3">Install</a>
+    <a href="#licence" data-edit="nav.licence" data-label="Nav link 4">Licence</a>
+    <a href="#controls" data-edit="nav.controls" data-label="Nav link 5">Controls</a>
     <a href="#scope">Scope</a>
   </nav>
-  <a class="btn btn-sm" href="#install">Get started</a>
+  <a class="btn btn-sm" href="#install" data-edit="nav.cta" data-label="Nav button">Get started</a>
 </header>
 
 <main id="top">
@@ -31,59 +31,59 @@
   <section class="hero">
     <div class="hero-glow"></div>
     <div class="hero-inner">
-      <span class="pill">Minecraft 26.2 · Fabric · client only</span>
-      <h1>Utility <span>Client</span></h1>
-      <p class="lede">
+      <span class="pill" data-edit="hero.pill" data-label="Hero badge">Minecraft 26.2 · Fabric · client only</span>
+      <h1><span data-edit="hero.title" data-label="Hero title">Utility</span> <span data-edit="hero.titleAccent" data-label="Hero title accent">Client</span></h1>
+      <p class="lede" data-edit="hero.lede" data-label="Hero tagline">
         A tidy set of quality-of-life and visual tools. Every module has a keybind, every colour
         has a real picker, and everything is toggled from one in-game menu.
       </p>
       <div class="hero-actions">
-        <a class="btn" href="#install">Install guide</a>
-        <a class="btn btn-ghost" href="#modules">Browse modules</a>
+        <a class="btn" href="#install" data-edit="hero.cta1" data-label="Hero button 1">Install guide</a>
+        <a class="btn btn-ghost" href="#modules" data-edit="hero.cta2" data-label="Hero button 2">Browse modules</a>
       </div>
-      <dl class="facts">
-        <div><dt>16</dt><dd>modules</dd></div>
-        <div><dt>1 key</dt><dd>opens the menu</dd></div>
-        <div><dt>0</dt><dd>server side changes</dd></div>
-        <div><dt>JSON</dt><dd>config file</dd></div>
+      <dl class="facts" data-repeat="fact">
+        <div><dt data-edit="facts.0.v" data-label="Stat 1 value">16</dt><dd data-edit="facts.0.l" data-label="Stat 1 label">modules</dd></div>
+        <div><dt data-edit="facts.1.v" data-label="Stat 2 value">1 key</dt><dd data-edit="facts.1.l" data-label="Stat 2 label">opens the menu</dd></div>
+        <div><dt data-edit="facts.2.v" data-label="Stat 3 value">0</dt><dd data-edit="facts.2.l" data-label="Stat 3 label">server side changes</dd></div>
+        <div><dt data-edit="facts.3.v" data-label="Stat 4 value">JSON</dt><dd data-edit="facts.3.l" data-label="Stat 4 label">config file</dd></div>
       </dl>
     </div>
   </section>
 
   <section id="features" class="section">
     <div class="section-head">
-      <h2>What it gives you</h2>
-      <p>The parts that apply across the whole client, rather than a single module.</p>
+      <h2 data-edit="features.heading" data-label="Features heading">What it gives you</h2>
+      <p data-edit="features.sub" data-label="Features subheading">The parts that apply across the whole client, rather than a single module.</p>
     </div>
-    <div class="grid grid-3">
+    <div class="grid grid-3" data-repeat="feature">
       <article class="card">
-        <h3>Keybind on every module</h3>
-        <p>Click a module's key box, then press any keyboard key <em>or</em> mouse button. Works with
+        <h3 data-edit="features.0.title" data-label="Feature 1 title">Keybind on every module</h3>
+        <p data-edit="features.0.body" data-label="Feature 1 text">Click a module's key box, then press any keyboard key <em>or</em> mouse button. Works with
            your own keybinds, ignores held state while a menu is open, and is saved to your config.</p>
       </article>
       <article class="card">
-        <h3>Real colour picker</h3>
-        <p>Every colour setting is a swatch you can open: a saturation and brightness square plus a
+        <h3 data-edit="features.1.title" data-label="Feature 2 title">Real colour picker</h3>
+        <p data-edit="features.1.body" data-label="Feature 2 text">Every colour setting is a swatch you can open: a saturation and brightness square plus a
            hue slider, with drag support. No preset list, no typing hex codes by hand.</p>
       </article>
       <article class="card">
-        <h3>Config you control</h3>
-        <p>Everything lives in a readable JSON file. The Configs tab can save, reload and reset back
+        <h3 data-edit="features.2.title" data-label="Feature 3 title">Config you control</h3>
+        <p data-edit="features.2.body" data-label="Feature 3 text">Everything lives in a readable JSON file. The Configs tab can save, reload and reset back
            to defaults without hand-editing anything.</p>
       </article>
       <article class="card">
-        <h3>Rounded, consistent UI</h3>
-        <p>One dark purple theme across the menu and the settings screens, with a scrollable
+        <h3 data-edit="features.3.title" data-label="Feature 4 title">Rounded, consistent UI</h3>
+        <p data-edit="features.3.body" data-label="Feature 4 text">One dark purple theme across the menu and the settings screens, with a scrollable
            settings list, live search and a moveable HUD.</p>
       </article>
       <article class="card">
-        <h3>Nothing server side</h3>
-        <p>The mod installs on your client only. No packets are rewritten and no server install is
+        <h3 data-edit="features.4.title" data-label="Feature 5 title">Nothing server side</h3>
+        <p data-edit="features.4.body" data-label="Feature 5 text">The mod installs on your client only. No packets are rewritten and no server install is
            needed, so it cannot break a world or a whitelist.</p>
       </article>
       <article class="card">
-        <h3>Bounded automation</h3>
-        <p>Where a module repeats an input, it is capped and clearly labelled. Nothing trades or
+        <h3 data-edit="features.5.title" data-label="Feature 6 title">Bounded automation</h3>
+        <p data-edit="features.5.body" data-label="Feature 6 text">Where a module repeats an input, it is capped and clearly labelled. Nothing trades or
            acts on its own without you being there.</p>
       </article>
     </div>
@@ -91,11 +91,11 @@
 
   <section id="modules" class="section section-alt">
     <div class="section-head">
-      <h2>Modules</h2>
-      <p>All sixteen, grouped by where they live in the menu.</p>
+      <h2 data-edit="modules.heading" data-label="Modules heading">Modules</h2>
+      <p data-edit="modules.sub" data-label="Modules subheading">All sixteen, grouped by where they live in the menu.</p>
     </div>
 
-    <p class="note-bar">
+    <p class="note-bar" data-edit="modules.note" data-label="Modules note">
       <strong>Combat is deliberately empty.</strong> This client has no combat automation, so
       that category exists in the menu for layout reasons and contains nothing. Every other
       category is populated.
@@ -113,155 +113,155 @@
       </div>
     </div>
 
-    <div class="grid grid-2" id="moduleGrid">
+    <div class="grid grid-2" id="moduleGrid" data-repeat="module">
 
       <article class="card module" data-cat="MISC" data-name="hud">
-        <div class="module-top"><h3>HUD</h3><span class="tag on">on by default</span></div>
-        <p>FPS, coordinates, facing and session time on one movable panel.</p>
+        <div class="module-top"><h3 data-edit="modules.hud.name" data-label="hud name">HUD</h3><span class="tag on" data-edit="modules.hud.tag" data-label="hud tag">on by default</span></div>
+        <p data-edit="modules.hud.desc" data-label="hud description">FPS, coordinates, facing and session time on one movable panel.</p>
         <ul class="module-list">
-          <li>Show FPS, coordinates and session time</li>
-          <li><strong>MOVE</strong> button to drag the HUD anywhere</li>
-          <li>Position stored per client</li>
+          <li data-edit="modules.hud.b0" data-label="hud bullet 1">Show FPS, coordinates and session time</li>
+          <li data-edit="modules.hud.b1" data-label="hud bullet 2"><strong>MOVE</strong> button to drag the HUD anywhere</li>
+          <li data-edit="modules.hud.b2" data-label="hud bullet 3">Position stored per client</li>
         </ul>
       </article>
 
       <article class="card module" data-cat="MISC" data-name="player radar">
-        <div class="module-top"><h3>Player Radar</h3><span class="tag">HUD</span></div>
-        <p>A small radar of nearby players, drawn under your HUD.</p>
+        <div class="module-top"><h3 data-edit="modules.player radar.name" data-label="player radar name">Player Radar</h3><span class="tag" data-edit="modules.player radar.tag" data-label="player radar tag">HUD</span></div>
+        <p data-edit="modules.player radar.desc" data-label="player radar description">A small radar of nearby players, drawn under your HUD.</p>
         <ul class="module-list">
-          <li>Radius and radar size controls</li>
-          <li>Rotates with you, or stays north-up</li>
-          <li>Names, distances and a live player count</li>
-          <li>Colours dots by whether players are above or below you</li>
-          <li>Hide spectators, show or hide the frame</li>
+          <li data-edit="modules.player radar.b0" data-label="player radar bullet 1">Radius and radar size controls</li>
+          <li data-edit="modules.player radar.b1" data-label="player radar bullet 2">Rotates with you, or stays north-up</li>
+          <li data-edit="modules.player radar.b2" data-label="player radar bullet 3">Names, distances and a live player count</li>
+          <li data-edit="modules.player radar.b3" data-label="player radar bullet 4">Colours dots by whether players are above or below you</li>
+          <li data-edit="modules.player radar.b4" data-label="player radar bullet 5">Hide spectators, show or hide the frame</li>
         </ul>
       </article>
 
       <article class="card module" data-cat="VISUAL" data-name="crosshair">
-        <div class="module-top"><h3>Crosshair</h3><span class="tag">Render</span></div>
-        <p>Ten crosshair models with a real colour picker.</p>
+        <div class="module-top"><h3 data-edit="modules.crosshair.name" data-label="crosshair name">Crosshair</h3><span class="tag" data-edit="modules.crosshair.tag" data-label="crosshair tag">Render</span></div>
+        <p data-edit="modules.crosshair.desc" data-label="crosshair description">Ten crosshair models with a real colour picker.</p>
         <ul class="module-list">
-          <li>Plus, Dot, Circle, Cross, T-Shape, X, Ring, Diamond, Arrow or None</li>
-          <li>Size, thickness and colour</li>
-          <li>Removes the vanilla crosshair so only yours shows</li>
-          <li>Optional attack progress indicator</li>
+          <li data-edit="modules.crosshair.b0" data-label="crosshair bullet 1">Plus, Dot, Circle, Cross, T-Shape, X, Ring, Diamond, Arrow or None</li>
+          <li data-edit="modules.crosshair.b1" data-label="crosshair bullet 2">Size, thickness and colour</li>
+          <li data-edit="modules.crosshair.b2" data-label="crosshair bullet 3">Removes the vanilla crosshair so only yours shows</li>
+          <li data-edit="modules.crosshair.b3" data-label="crosshair bullet 4">Optional attack progress indicator</li>
         </ul>
       </article>
 
       <article class="card module" data-cat="VISUAL" data-name="block highlight">
-        <div class="module-top"><h3>Block Highlight</h3><span class="tag">Render</span></div>
-        <p>Highlights the block you are aiming at, in your own colour.</p>
+        <div class="module-top"><h3 data-edit="modules.block highlight.name" data-label="block highlight name">Block Highlight</h3><span class="tag" data-edit="modules.block highlight.tag" data-label="block highlight tag">Render</span></div>
+        <p data-edit="modules.block highlight.desc" data-label="block highlight description">Highlights the block you are aiming at, in your own colour.</p>
         <ul class="module-list">
-          <li>Border or full-block fill</li>
-          <li>Thickness and fill opacity</li>
-          <li>Full colour picker</li>
+          <li data-edit="modules.block highlight.b0" data-label="block highlight bullet 1">Border or full-block fill</li>
+          <li data-edit="modules.block highlight.b1" data-label="block highlight bullet 2">Thickness and fill opacity</li>
+          <li data-edit="modules.block highlight.b2" data-label="block highlight bullet 3">Full colour picker</li>
         </ul>
       </article>
 
       <article class="card module" data-cat="VISUAL" data-name="custom break animation">
-        <div class="module-top"><h3>Custom Break Animation</h3><span class="tag">Visual</span></div>
-        <p>A mining animation you can actually see, drawn on the block you are breaking.</p>
+        <div class="module-top"><h3 data-edit="modules.custom break animation.name" data-label="custom break animation name">Custom Break Animation</h3><span class="tag" data-edit="modules.custom break animation.tag" data-label="custom break animation tag">Visual</span></div>
+        <p data-edit="modules.custom break animation.desc" data-label="custom break animation description">A mining animation you can actually see, drawn on the block you are breaking.</p>
         <ul class="module-list">
-          <li>Classic, Neon, Minimal, Pulse or Smooth presets</li>
-          <li>Camera-facing progress bar above the block</li>
-          <li>Colour, smoothing and bar width</li>
+          <li data-edit="modules.custom break animation.b0" data-label="custom break animation bullet 1">Classic, Neon, Minimal, Pulse or Smooth presets</li>
+          <li data-edit="modules.custom break animation.b1" data-label="custom break animation bullet 2">Camera-facing progress bar above the block</li>
+          <li data-edit="modules.custom break animation.b2" data-label="custom break animation bullet 3">Colour, smoothing and bar width</li>
         </ul>
       </article>
 
       <article class="card module" data-cat="VISUAL" data-name="fullbright">
-        <div class="module-top"><h3>Fullbright</h3><span class="tag">Visual</span></div>
-        <p>Raises the light level your client sees, so dark areas stay readable.</p>
-        <ul class="module-list"><li>Adjustable brightness</li></ul>
+        <div class="module-top"><h3 data-edit="modules.fullbright.name" data-label="fullbright name">Fullbright</h3><span class="tag" data-edit="modules.fullbright.tag" data-label="fullbright tag">Visual</span></div>
+        <p data-edit="modules.fullbright.desc" data-label="fullbright description">Raises the light level your client sees, so dark areas stay readable.</p>
+        <ul class="module-list"><li data-edit="modules.fullbright.b0" data-label="fullbright bullet 1">Adjustable brightness</li></ul>
       </article>
 
       <article class="card module" data-cat="VISUAL" data-name="no particles">
-        <div class="module-top"><h3>No Particles</h3><span class="tag">Visual</span></div>
-        <p>Fewer particles, including the fragments from breaking blocks.</p>
+        <div class="module-top"><h3 data-edit="modules.no particles.name" data-label="no particles name">No Particles</h3><span class="tag" data-edit="modules.no particles.tag" data-label="no particles tag">Visual</span></div>
+        <p data-edit="modules.no particles.desc" data-label="no particles description">Fewer particles, including the fragments from breaking blocks.</p>
         <ul class="module-list">
-          <li>Minimal or Decreased level</li>
-          <li>Block-break particles filtered at the particle engine</li>
+          <li data-edit="modules.no particles.b0" data-label="no particles bullet 1">Minimal or Decreased level</li>
+          <li data-edit="modules.no particles.b1" data-label="no particles bullet 2">Block-break particles filtered at the particle engine</li>
         </ul>
       </article>
 
       <article class="card module" data-cat="VISUAL" data-name="no dropped items">
-        <div class="module-top"><h3>No Dropped Items</h3><span class="tag">Visual</span></div>
-        <p>Hides dropped item entities on your screen without touching the world.</p>
-        <ul class="module-list"><li>Optional radius</li></ul>
+        <div class="module-top"><h3 data-edit="modules.no dropped items.name" data-label="no dropped items name">No Dropped Items</h3><span class="tag" data-edit="modules.no dropped items.tag" data-label="no dropped items tag">Visual</span></div>
+        <p data-edit="modules.no dropped items.desc" data-label="no dropped items description">Hides dropped item entities on your screen without touching the world.</p>
+        <ul class="module-list"><li data-edit="modules.no dropped items.b0" data-label="no dropped items bullet 1">Optional radius</li></ul>
       </article>
 
       <article class="card module" data-cat="DONUTSMP" data-name="anti leaker">
-        <div class="module-top"><h3>Anti Leaker</h3><span class="tag">Visual</span></div>
-        <p>Generates a small resource pack that repaints leaky blocks with the netherite texture, so
+        <div class="module-top"><h3 data-edit="modules.anti leaker.name" data-label="anti leaker name">Anti Leaker</h3><span class="tag" data-edit="modules.anti leaker.tag" data-label="anti leaker tag">Visual</span></div>
+        <p data-edit="modules.anti leaker.desc" data-label="anti leaker description">Generates a small resource pack that repaints leaky blocks with the netherite texture, so
            you can see what you are looking at underground.</p>
         <ul class="module-list">
-          <li>Deepslate family, tuff family, gravel and bedrock</li>
-          <li>Optional deepslate ores and the whole stone family</li>
-          <li>Writes the pack, enables it and reloads for you</li>
+          <li data-edit="modules.anti leaker.b0" data-label="anti leaker bullet 1">Deepslate family, tuff family, gravel and bedrock</li>
+          <li data-edit="modules.anti leaker.b1" data-label="anti leaker bullet 2">Optional deepslate ores and the whole stone family</li>
+          <li data-edit="modules.anti leaker.b2" data-label="anti leaker bullet 3">Writes the pack, enables it and reloads for you</li>
         </ul>
       </article>
 
       <article class="card module" data-cat="MOVEMENT" data-name="free look">
-        <div class="module-top"><h3>Free Look</h3><span class="tag">Visual</span></div>
-        <p>Turn your view without turning your body, and see it in third person.</p>
+        <div class="module-top"><h3 data-edit="modules.free look.name" data-label="free look name">Free Look</h3><span class="tag" data-edit="modules.free look.tag" data-label="free look tag">Visual</span></div>
+        <p data-edit="modules.free look.desc" data-label="free look description">Turn your view without turning your body, and see it in third person.</p>
         <ul class="module-list">
-          <li>Sensitivity, vertical lock and perspective choice</li>
-          <li>Camera passes through walls instead of being yanked in</li>
-          <li>Restores your view when switched off</li>
+          <li data-edit="modules.free look.b0" data-label="free look bullet 1">Sensitivity, vertical lock and perspective choice</li>
+          <li data-edit="modules.free look.b1" data-label="free look bullet 2">Camera passes through walls instead of being yanked in</li>
+          <li data-edit="modules.free look.b2" data-label="free look bullet 3">Restores your view when switched off</li>
         </ul>
       </article>
 
       <article class="card module" data-cat="MOVEMENT" data-name="free cam">
-        <div class="module-top"><h3>Free Cam</h3><span class="tag">Visual</span></div>
-        <p>Detaches the camera and flies it around the world.</p>
+        <div class="module-top"><h3 data-edit="modules.free cam.name" data-label="free cam name">Free Cam</h3><span class="tag" data-edit="modules.free cam.tag" data-label="free cam tag">Visual</span></div>
+        <p data-edit="modules.free cam.desc" data-label="free cam description">Detaches the camera and flies it around the world.</p>
         <ul class="module-list">
-          <li>WASD to move, space and shift for up and down</li>
-          <li>Speed control, hold control to go faster</li>
-          <li>Your character stays exactly where it was</li>
+          <li data-edit="modules.free cam.b0" data-label="free cam bullet 1">WASD to move, space and shift for up and down</li>
+          <li data-edit="modules.free cam.b1" data-label="free cam bullet 2">Speed control, hold control to go faster</li>
+          <li data-edit="modules.free cam.b2" data-label="free cam bullet 3">Your character stays exactly where it was</li>
         </ul>
       </article>
 
       <article class="card module" data-cat="VISUAL" data-name="zoom">
-        <div class="module-top"><h3>Zoom</h3><span class="tag">Visual</span></div>
-        <p>Narrows your field of view while the module is on.</p>
-        <ul class="module-list"><li>Adjustable amount</li></ul>
+        <div class="module-top"><h3 data-edit="modules.zoom.name" data-label="zoom name">Zoom</h3><span class="tag" data-edit="modules.zoom.tag" data-label="zoom tag">Visual</span></div>
+        <p data-edit="modules.zoom.desc" data-label="zoom description">Narrows your field of view while the module is on.</p>
+        <ul class="module-list"><li data-edit="modules.zoom.b0" data-label="zoom bullet 1">Adjustable amount</li></ul>
       </article>
 
       <article class="card module" data-cat="MOVEMENT" data-name="snap turn">
-        <div class="module-top"><h3>Snap Turn</h3><span class="tag">Misc</span></div>
-        <p>Arrow keys snap the camera to exact angles instead of smooth turning.</p>
+        <div class="module-top"><h3 data-edit="modules.snap turn.name" data-label="snap turn name">Snap Turn</h3><span class="tag" data-edit="modules.snap turn.tag" data-label="snap turn tag">Misc</span></div>
+        <p data-edit="modules.snap turn.desc" data-label="snap turn description">Arrow keys snap the camera to exact angles instead of smooth turning.</p>
         <ul class="module-list">
-          <li>Left and right snap your turn to 45, 90, 135 or 180</li>
-          <li>Up and down snap your view up and down to exact angles</li>
-          <li>Invert, level pitch, and turn-around mode</li>
+          <li data-edit="modules.snap turn.b0" data-label="snap turn bullet 1">Left and right snap your turn to 45, 90, 135 or 180</li>
+          <li data-edit="modules.snap turn.b1" data-label="snap turn bullet 2">Up and down snap your view up and down to exact angles</li>
+          <li data-edit="modules.snap turn.b2" data-label="snap turn bullet 3">Invert, level pitch, and turn-around mode</li>
         </ul>
       </article>
 
       <article class="card module" data-cat="MOVEMENT" data-name="auto walk">
-        <div class="module-top"><h3>Auto Walk</h3><span class="tag">Misc</span></div>
-        <p>Keeps a movement key held so you do not have to hold it.</p>
+        <div class="module-top"><h3 data-edit="modules.auto walk.name" data-label="auto walk name">Auto Walk</h3><span class="tag" data-edit="modules.auto walk.tag" data-label="auto walk tag">Misc</span></div>
+        <p data-edit="modules.auto walk.desc" data-label="auto walk description">Keeps a movement key held so you do not have to hold it.</p>
         <ul class="module-list">
-          <li>Straight, left, right or backward</li>
-          <li>Always sprint option</li>
+          <li data-edit="modules.auto walk.b0" data-label="auto walk bullet 1">Straight, left, right or backward</li>
+          <li data-edit="modules.auto walk.b1" data-label="auto walk bullet 2">Always sprint option</li>
         </ul>
       </article>
 
       <article class="card module" data-cat="MISC" data-name="click holder">
-        <div class="module-top"><h3>Click Holder</h3><span class="tag">Misc</span></div>
-        <p>Keeps a mouse button held down for you.</p>
+        <div class="module-top"><h3 data-edit="modules.click holder.name" data-label="click holder name">Click Holder</h3><span class="tag" data-edit="modules.click holder.tag" data-label="click holder tag">Misc</span></div>
+        <p data-edit="modules.click holder.desc" data-label="click holder description">Keeps a mouse button held down for you.</p>
         <ul class="module-list">
-          <li>Hold left click, hold right click, or both</li>
-          <li>One press then a held state, not a repeating clicker</li>
-          <li>Releases when a menu opens so inventory clicks still work</li>
+          <li data-edit="modules.click holder.b0" data-label="click holder bullet 1">Hold left click, hold right click, or both</li>
+          <li data-edit="modules.click holder.b1" data-label="click holder bullet 2">One press then a held state, not a repeating clicker</li>
+          <li data-edit="modules.click holder.b2" data-label="click holder bullet 3">Releases when a menu opens so inventory clicks still work</li>
         </ul>
       </article>
 
       <article class="card module" data-cat="MISC" data-name="auto villager trader">
-        <div class="module-top"><h3>Auto Villager Trader</h3><span class="tag">Misc</span></div>
-        <p>Open a villager yourself and it does the trading for you.</p>
+        <div class="module-top"><h3 data-edit="modules.auto villager trader.name" data-label="auto villager trader name">Auto Villager Trader</h3><span class="tag" data-edit="modules.auto villager trader.tag" data-label="auto villager trader tag">Misc</span></div>
+        <p data-edit="modules.auto villager trader.desc" data-label="auto villager trader description">Open a villager yourself and it does the trading for you.</p>
         <ul class="module-list">
-          <li>Only acts while a villager screen is open</li>
-          <li>Delay between trades and a maximum trade count</li>
-          <li>First offer only, so it stops after a single purchase</li>
+          <li data-edit="modules.auto villager trader.b0" data-label="auto villager trader bullet 1">Only acts while a villager screen is open</li>
+          <li data-edit="modules.auto villager trader.b1" data-label="auto villager trader bullet 2">Delay between trades and a maximum trade count</li>
+          <li data-edit="modules.auto villager trader.b2" data-label="auto villager trader bullet 3">First offer only, so it stops after a single purchase</li>
         </ul>
       </article>
 
@@ -271,38 +271,38 @@
 
   <section id="licence" class="section">
     <div class="section-head">
-      <h2>Licence keys</h2>
-      <p>How access to the client works, and what it does and does not protect you against.</p>
+      <h2 data-edit="licence.heading" data-label="Licence heading">Licence keys</h2>
+      <p data-edit="licence.sub" data-label="Licence subheading">How access to the client works, and what it does and does not protect you against.</p>
     </div>
 
     <div class="grid grid-2">
       <article class="card">
-        <h3>Plans</h3>
-        <ul class="plan-list">
-          <li><strong>1 Day</strong><span>24 hours from first launch</span></li>
-          <li><strong>1 Week</strong><span>7 days</span></li>
-          <li><strong>1 Month</strong><span>30 days</span></li>
-          <li><strong>Permanent</strong><span>Never expires</span></li>
+        <h3 data-edit="licence.plans.title" data-label="Licence card 1 title">Plans</h3>
+        <ul class="plan-list" data-repeat="plan">
+          <li><strong data-edit="licence.plans.0.name" data-label="Plan 1 name">1 Day</strong><span data-edit="licence.plans.0.desc" data-label="Plan 1 note">24 hours from first launch</span></li>
+          <li><strong data-edit="licence.plans.1.name" data-label="Plan 2 name">1 Week</strong><span>7 days</span></li>
+          <li><strong data-edit="licence.plans.2.name" data-label="Plan 3 name">1 Month</strong><span>30 days</span></li>
+          <li><strong data-edit="licence.plans.3.name" data-label="Plan 4 name">Permanent</strong><span>Never expires</span></li>
         </ul>
       </article>
       <article class="card">
-        <h3>How a key is used</h3>
-        <p>Paste it into the activation screen with <kbd>Insert</kbd> or <code>/utilitykey</code>.
+        <h3 data-edit="licence.usage.title" data-label="Licence card 2 title">How a key is used</h3>
+        <p data-edit="licence.usage.b1" data-label="Licence card 2 para 1">Paste it into the activation screen with <kbd>Insert</kbd> or <code>/utilitykey</code>.
            The client then asks the key server whether it is valid, and caches the answer for
            six hours so it does not phone home on every launch.</p>
-        <p>You are offline-proof for 72 hours. If the key server is unreachable the client keeps
+        <p data-edit="licence.usage.b2" data-label="Licence card 2 para 2">You are offline-proof for 72 hours. If the key server is unreachable the client keeps
            running on your last verified check, so a server problem never locks you out of your
            own game.</p>
       </article>
       <article class="card">
-        <h3>Your profile card</h3>
-        <p>The card at the bottom left of the menu shows your plan and how long is left on it. A
+        <h3 data-edit="licence.profile.title" data-label="Licence card 3 title">Your profile card</h3>
+        <p data-edit="licence.profile.b1" data-label="Licence card 3 para 1">The card at the bottom left of the menu shows your plan and how long is left on it. A
            green dot means the key is verified. Clicking the card takes you back to the
            activation screen to change or remove the key.</p>
       </article>
       <article class="card">
-        <h3>What a key does not stop</h3>
-        <p>This is worth being blunt about. The mod runs on your own machine, so anyone
+        <h3 data-edit="licence.limits.title" data-label="Licence card 4 title">What a key does not stop</h3>
+        <p data-edit="licence.limits.b1" data-label="Licence card 4 para 1">This is worth being blunt about. The mod runs on your own machine, so anyone
            determined can patch the check out of the jar. A key stops casual sharing and casual
            piracy, which is the overwhelming majority of it. It is not unbreakable DRM, and it
            should not be sold as though it is.</p>
@@ -312,29 +312,29 @@
 
   <section id="install" class="section section-alt">
     <div class="section-head">
-      <h2>Installing</h2>
-      <p>Client only. Nothing goes on the server.</p>
+      <h2 data-edit="install.heading" data-label="Install heading">Installing</h2>
+      <p data-edit="install.sub" data-label="Install subheading">Client only. Nothing goes on the server.</p>
     </div>
 
     <div class="install">
       <div class="req">
-        <h3>Requirements</h3>
+        <h3 data-edit="install.req.title" data-label="Requirements heading">Requirements</h3>
         <ul>
-          <li>Minecraft <strong>26.2</strong></li>
-          <li>Fabric Loader <strong>0.19.5</strong> or newer</li>
-          <li>Fabric API <strong>0.161.0+26.2</strong></li>
-          <li>Java <strong>25</strong> or newer</li>
+          <li data-edit="install.req.0" data-label="Requirement 1">Minecraft <strong>26.2</strong></li>
+          <li data-edit="install.req.1" data-label="Requirement 2">Fabric Loader <strong>0.19.5</strong> or newer</li>
+          <li data-edit="install.req.2" data-label="Requirement 3">Fabric API <strong>0.161.0+26.2</strong></li>
+          <li data-edit="install.req.3" data-label="Requirement 4">Java <strong>25</strong> or newer</li>
         </ul>
       </div>
       <div class="steps">
-        <h3>Steps</h3>
+        <h3 data-edit="install.steps.title" data-label="Steps heading">Steps</h3>
         <ol>
-          <li>Install Fabric Loader and Fabric API for Minecraft 26.2.</li>
-          <li>Drop <code>utility-client-0.1.0.jar</code> into your profile's <code>mods</code> folder.</li>
-          <li>Launch Minecraft and press <kbd>Insert</kbd>. Paste your key when asked.</li>
+          <li data-edit="install.steps.0" data-label="Step 1">Install Fabric Loader and Fabric API for Minecraft 26.2.</li>
+          <li data-edit="install.steps.1" data-label="Step 2">Drop <code>utility-client-0.1.0.jar</code> into your profile's <code>mods</code> folder.</li>
+          <li data-edit="install.steps.2" data-label="Step 3">Launch Minecraft and press <kbd>Insert</kbd>. Paste your key when asked.</li>
         </ol>
         <div class="path-box">
-          <code id="pathText">%APPDATA%\.minecraft\installations\&lt;profile&gt;\mods\</code>
+          <code id="pathText" data-edit="install.path" data-label="Mods folder path">%APPDATA%\.minecraft\installations\&lt;profile&gt;\mods\</code>
           <button class="btn btn-sm" id="copyPath" type="button">Copy</button>
         </div>
       </div>
@@ -344,35 +344,35 @@
 
   <section id="controls" class="section section-alt">
     <div class="section-head">
-      <h2>Controls</h2>
-      <p>Getting around the menu.</p>
+      <h2 data-edit="controls.heading" data-label="Controls heading">Controls</h2>
+      <p data-edit="controls.sub" data-label="Controls subheading">Getting around the menu.</p>
     </div>
     <div class="grid grid-2">
       <article class="card">
-        <h3>Opening and toggling</h3>
-        <ul class="keys">
-          <li><kbd>Insert</kbd><span>Open the menu, or the key screen if unlicensed</span></li>
-          <li><code>/utility</code><span>Open the menu from chat</span></li>
-          <li><code>/utilitykey</code><span>Open the key screen directly</span></li>
-          <li><kbd>Left click</kbd><span>Toggle a module card</span></li>
-          <li><kbd>Right click</kbd><span>Open that module's settings</span></li>
-          <li><kbd>Esc</kbd><span>Close a menu</span></li>
+        <h3 data-edit="controls.open.title" data-label="Controls card 1 title">Opening and toggling</h3>
+        <ul class="keys" data-repeat="keyrow">
+          <li><kbd data-edit="controls.open.0.k" data-label="Open row 1 key">Insert</kbd><span data-edit="controls.open.0.v" data-label="Open row 1 action">Open the menu, or the key screen if unlicensed</span></li>
+          <li><code data-edit="controls.open.1.k" data-label="Open row 2 command">/utility</code><span data-edit="controls.open.1.v" data-label="Open row 2 action">Open the menu from chat</span></li>
+          <li><code data-edit="controls.open.2.k" data-label="Open row 3 command">/utilitykey</code><span data-edit="controls.open.2.v" data-label="Open row 3 action">Open the key screen directly</span></li>
+          <li><kbd data-edit="controls.open.3.k" data-label="Open row 4 key">Left click</kbd><span data-edit="controls.open.3.v" data-label="Open row 4 action">Toggle a module card</span></li>
+          <li><kbd data-edit="controls.open.4.k" data-label="Open row 5 key">Right click</kbd><span data-edit="controls.open.4.v" data-label="Open row 5 action">Open that module's settings</span></li>
+          <li><kbd data-edit="controls.open.5.k" data-label="Open row 6 key">Esc</kbd><span data-edit="controls.open.5.v" data-label="Open row 6 action">Close a menu</span></li>
         </ul>
       </article>
       <article class="card">
-        <h3>Inside a module's settings</h3>
-        <ul class="keys">
-          <li><kbd>Click</kbd><span>Pick a value with the − and + buttons</span></li>
-          <li><kbd>Click</kbd><span>Open the colour picker on a swatch</span></li>
-          <li><kbd>Click</kbd><span>Start listening, then press a key or mouse button</span></li>
-          <li><kbd>Delete</kbd><span>Clear a keybind while listening</span></li>
-          <li><kbd>Scroll</kbd><span>Move through a long settings list</span></li>
+        <h3 data-edit="controls.mod.title" data-label="Controls card 2 title">Inside a module's settings</h3>
+        <ul class="keys" data-repeat="keyrow">
+          <li><kbd data-edit="controls.mod.0.k" data-label="Module row 1 key">Click</kbd><span data-edit="controls.mod.0.v" data-label="Module row 1 action">Pick a value with the − and + buttons</span></li>
+          <li><kbd data-edit="controls.mod.1.k" data-label="Module row 2 key">Click</kbd><span data-edit="controls.mod.1.v" data-label="Module row 2 action">Open the colour picker on a swatch</span></li>
+          <li><kbd data-edit="controls.mod.2.k" data-label="Module row 3 key">Click</kbd><span data-edit="controls.mod.2.v" data-label="Module row 3 action">Start listening, then press a key or mouse button</span></li>
+          <li><kbd data-edit="controls.mod.3.k" data-label="Module row 4 key">Delete</kbd><span data-edit="controls.mod.3.v" data-label="Module row 4 action">Clear a keybind while listening</span></li>
+          <li><kbd data-edit="controls.mod.4.k" data-label="Module row 5 key">Scroll</kbd><span data-edit="controls.mod.4.v" data-label="Module row 5 action">Move through a long settings list</span></li>
         </ul>
       </article>
     </div>
     <div class="callout">
-      <h3>Config file</h3>
-      <p>Module states, every setting and every keybind are stored in
+      <h3 data-edit="controls.file.title" data-label="Config callout title">Config file</h3>
+      <p data-edit="controls.file.body" data-label="Config callout text">Module states, every setting and every keybind are stored in
         <code>config/utility-client.json</code>. The Configs tab in the sidebar can save, reload
         or reset everything back to defaults.</p>
     </div>
@@ -380,18 +380,18 @@
 
   <section id="scope" class="section">
     <div class="section-head">
-      <h2>What it deliberately does not do</h2>
-      <p>Being clear about this up front saves everyone time.</p>
+      <h2 data-edit="scope.heading" data-label="Scope heading">What it deliberately does not do</h2>
+      <p data-edit="scope.sub" data-label="Scope subheading">Being clear about this up front saves everyone time.</p>
     </div>
-    <div class="grid grid-2 no-grid">
-      <div class="no-item"><span>✕</span>Combat automation</div>
-      <div class="no-item"><span>✕</span>X-ray or ore detection</div>
-      <div class="no-item"><span>✕</span>Reach or aim assist</div>
-      <div class="no-item"><span>✕</span>Packet spoofing</div>
-      <div class="no-item"><span>✕</span>Anti-cheat bypasses</div>
-      <div class="no-item"><span>✕</span>Automated mining or block automation</div>
+    <div class="grid grid-2 no-grid" data-repeat="scope">
+      <div class="no-item"><span>✕</span><span data-edit="scope.0" data-label="Scope item 1">Combat automation</span></div>
+      <div class="no-item"><span>✕</span><span data-edit="scope.1" data-label="Scope item 2">X-ray or ore detection</span></div>
+      <div class="no-item"><span>✕</span><span data-edit="scope.2" data-label="Scope item 3">Reach or aim assist</span></div>
+      <div class="no-item"><span>✕</span><span data-edit="scope.3" data-label="Scope item 4">Packet spoofing</span></div>
+      <div class="no-item"><span>✕</span><span data-edit="scope.4" data-label="Scope item 5">Anti-cheat bypasses</span></div>
+      <div class="no-item"><span>✕</span><span data-edit="scope.5" data-label="Scope item 6">Automated mining or block automation</span></div>
     </div>
-    <p class="fine">
+    <p class="fine" data-edit="scope.fine" data-label="Scope footnote">
       Where a module repeats an input for you, such as the click holder or the villager trader, it
       is capped, clearly labelled, and never acts on its own without you being there.
     </p>
@@ -403,25 +403,27 @@
   <div class="footer-inner">
     <div>
       <span class="brand-mark small">U</span>
-      <p>Utility Client — a client-side QoL and visual mod for Minecraft 26.2.</p>
+      <p data-edit="footer.blurb" data-label="Footer blurb">Utility Client — a client-side QoL and visual mod for Minecraft 26.2.</p>
     </div>
     <div class="footer-links">
-      <a href="#features">Features</a>
-      <a href="#modules">Modules</a>
-      <a href="#install">Install</a>
-      <a href="#controls">Controls</a>
+      <a href="#features" data-edit="footer.l1" data-label="Footer link 1">Features</a>
+      <a href="#modules" data-edit="footer.l2" data-label="Footer link 2">Modules</a>
+      <a href="#install" data-edit="footer.l3" data-label="Footer link 3">Install</a>
+      <a href="#controls" data-edit="footer.l4" data-label="Footer link 4">Controls</a>
     </div>
   </div>
-  <p class="fine">Not an official Minecraft product. Requires Minecraft 26.2 and Fabric.</p>
+  <p class="fine" data-edit="footer.fine" data-label="Footer legal line">Not an official Minecraft product. Requires Minecraft 26.2 and Fabric.</p>
 </footer>
 
 <!-- Admin panel. Shown instead of the page when the URL ends in #admin. -->
+<script src="content.js"></script>
+<script src="editor.js"></script>
 <script src="script.js"></script>
 <div class="admin" id="adminApp" hidden>
 
   <section class="admin-gate" id="adminGate">
     <div class="admin-card">
-      <span class="brand-mark">U</span>
+      <span class="brand-mark" data-logo>U</span>
       <h2>Admin</h2>
       <p class="fine">This area issues licence keys for the client.</p>
       <label class="field">
@@ -472,6 +474,87 @@
       </p>
     </div>
 
+    <!-- ============ SITE EDITOR ============ -->
+    <h3 class="admin-sub">Edit the site</h3>
+
+    <div class="admin-card">
+      <div class="editor-bar">
+        <div class="editor-tabs" id="editorTabs">
+          <button class="chip is-active" data-tab="text" type="button">Text</button>
+          <button class="chip" data-tab="theme" type="button">Colours</button>
+          <button class="chip" data-tab="sections" type="button">Sections</button>
+          <button class="chip" data-tab="logo" type="button">Logo</button>
+          <button class="chip" data-tab="json" type="button">JSON</button>
+        </div>
+        <div class="admin-actions">
+          <button class="btn btn-sm btn-ghost" id="edPreview" type="button">Preview</button>
+          <button class="btn btn-sm btn-ghost" id="edUndo" type="button" disabled>Undo</button>
+          <button class="btn btn-sm btn-ghost" id="edReset" type="button">Reset all</button>
+          <button class="btn btn-sm btn-ghost" id="edExport" type="button">Export</button>
+          <button class="btn btn-sm btn-ghost" id="edImport" type="button">Import</button>
+          <button class="btn btn-sm" id="edSaveLocal" type="button">Save here</button>
+          <button class="btn btn-sm" id="edPublish" type="button">Publish to site</button>
+        </div>
+      </div>
+      <p class="fine" id="edStatus">Nothing changed yet. Edits are previewed live on this page.</p>
+    </div>
+
+    <div class="admin-card" id="paneText" data-pane="text">
+      <p class="fine">
+        Every headline, paragraph, module description and bullet on the site is listed here.
+        Blank a field to fall back to the original wording.
+      </p>
+      <div id="edFields"></div>
+    </div>
+
+    <div class="admin-card" data-pane="theme" hidden>
+      <p class="fine">These drive the whole site. Changes apply immediately.</p>
+      <div class="swatch-grid" id="edTheme"></div>
+      <div class="admin-actions" style="margin-top:1rem">
+        <button class="btn btn-sm btn-ghost" id="edThemeReset" type="button">Back to defaults</button>
+      </div>
+    </div>
+
+    <div class="admin-card" data-pane="sections" hidden>
+      <p class="fine">Hide a section to take it off the live site, or reorder modules by dragging is
+        not supported yet, so use the Text tab for wording.</p>
+      <div id="edSections"></div>
+    </div>
+
+    <div class="admin-card" data-pane="logo" hidden>
+      <p class="fine">Upload a square image, or just set the letter shown in the purple tile.</p>
+      <div class="field">
+        <span>Letter or short text</span>
+        <input id="edLogoText" type="text" maxlength="3" placeholder="U">
+      </div>
+      <div class="field">
+        <span>Image URL (optional, overrides the letter)</span>
+        <input id="edLogoUrl" type="url" placeholder="https://.../logo.png">
+      </div>
+      <div class="field">
+        <span>Or upload a file</span>
+        <input id="edLogoFile" type="file" accept="image/*">
+      </div>
+      <p class="fine">Uploads are stored as a data URL inside the site content, so keep the file
+        small. A square PNG under about 40 KB is ideal.</p>
+      <div class="admin-actions" style="margin-top:1rem">
+        <button class="btn btn-sm btn-ghost" id="edLogoClear" type="button">Remove logo image</button>
+      </div>
+    </div>
+
+    <div class="admin-card" data-pane="json" hidden>
+      <p class="fine">
+        The raw content document. Edit it here for anything the form does not cover, then press
+        Apply. This is the same file Export downloads.
+      </p>
+      <textarea id="edJson" class="json-box" spellcheck="false" rows="18"></textarea>
+      <div class="admin-actions" style="margin-top:0.8rem">
+        <button class="btn btn-sm" id="edJsonApply" type="button">Apply JSON</button>
+        <button class="btn btn-sm btn-ghost" id="edJsonCopy" type="button">Copy</button>
+      </div>
+    </div>
+
+    <!-- ============ KEY ISSUING ============ -->
     <h3 class="admin-sub">Generate keys</h3>
     <div class="tier-grid">
       <button class="tier" data-tier="DAY" type="button">

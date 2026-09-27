@@ -122,6 +122,101 @@ function rateLimited(request) {
   return list.length > limit;
 }
 
+/* ---------------------------------------------------------------- site content */
+
+const CONTENT_KEY = 'site:content';
+const MAX_CONTENT_BYTES = 200 * 1024;
+
+/**
+ * Public read, used by the site on every page load. The site treats a failure here as
+ * harmless, so this must never throw.
+ */
+async function handleGetContent(request, env) {
+  const stored = await env.KEYS.get(CONTENT_KEY, 'json');
+  if (!stored) {
+    return json({ ok: true, content: null, updatedAt: 0 });
+  }
+  return json({ ok: true, content: stored.content, updatedAt: stored.updatedAt || 0 });
+}
+
+/** Admin write. This is what the Publish button in the admin panel calls. */
+async function handlePutContent(request, env) {
+  if (!authorised(request, env)) {
+    return fail('Bad admin token', 401);
+  }
+
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return fail('Body must be JSON');
+  }
+
+  const content = body && body.content;
+  if (!content || typeof content !== 'object') {
+    return fail('Missing content object');
+  }
+
+  if (JSON.stringify(content).length > MAX_CONTENT_BYTES) {
+    return fail('Content is too large. The limit is about 200 KB, most of which is the logo.', 413);
+  }
+
+  // Only the keys the site understands are kept, so a hand crafted request cannot stuff
+  // arbitrary data into KV.
+  const clean = {
+    overrides: sanitiseStrings(content.overrides),
+    theme: sanitiseStrings(content.theme),
+    hidden: sanitiseBools(content.hidden),
+    order: content.order && typeof content.order === 'object' ? content.order : {},
+    logo: sanitiseLogo(content.logo),
+    savedAt: Date.now(),
+  };
+
+  const updatedAt = Date.now();
+  await env.KEYS.put(CONTENT_KEY, JSON.stringify({ content: clean, updatedAt }));
+
+  return json({ ok: true, content: clean, updatedAt });
+}
+
+function sanitiseStrings(input) {
+  const out = {};
+  if (!input || typeof input !== 'object') return out;
+  let count = 0;
+  for (const key of Object.keys(input)) {
+    if (count >= 2000) break;
+    if (key.length > 120) continue;
+    const value = input[key];
+    if (typeof value !== 'string') continue;
+    out[key] = value.slice(0, 4000);
+    count += 1;
+  }
+  return out;
+}
+
+function sanitiseBools(input) {
+  const out = {};
+  if (!input || typeof input !== 'object') return out;
+  for (const key of Object.keys(input)) {
+    if (key.length > 120) continue;
+    out[key] = !!input[key];
+  }
+  return out;
+}
+
+function sanitiseLogo(logo) {
+  if (!logo || typeof logo !== 'object') return null;
+  const out = {};
+  if (typeof logo.text === 'string') out.text = logo.text.slice(0, 3);
+  if (typeof logo.data === 'string') {
+    const d = logo.data;
+    // Images only. Nothing that a browser could execute.
+    if (d.startsWith('data:image/') || d.startsWith('https://') || d.startsWith('http://')) {
+      out.data = d.slice(0, 150 * 1024);
+    }
+  }
+  return Object.keys(out).length ? out : null;
+}
+
 /* ---------------------------------------------------------------- routes */
 
 async function handleValidate(request, env) {
@@ -304,6 +399,12 @@ export default {
     const route = url.pathname.replace(/\/+$/, '') || '/';
 
     try {
+      if (route === '/content' && request.method === 'GET') {
+        return await handleGetContent(request, env);
+      }
+      if (route === '/content' && request.method === 'POST') {
+        return await handlePutContent(request, env);
+      }
       if (route === '/health') {
         return json({ ok: true, service: 'utilityclient-keys', time: Date.now() });
       }
