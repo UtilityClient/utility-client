@@ -1,12 +1,21 @@
 # Deploying this
 
-Two pieces go online: the **site** (free static hosting) and the **key server** (a free
-Cloudflare Worker). Everything here is on a free tier. Nothing costs money, but a `.com`
-domain does — see [About the address](#about-the-address).
+Two pieces go online. **The site is already done** — it is live at
+<https://somone290.github.io/utility-client/> on GitHub Pages. What is left is the **key
+server**, a free Cloudflare Worker.
+
+| Piece | Status |
+| --- | --- |
+| Site | Live |
+| Admin panel | <https://somone290.github.io/utility-client/#admin> |
+| Key server | **Not deployed yet** |
+| Client pointing at the key server | **Not configured yet** |
+
+Until the key server exists, no key can be validated and the client stays locked.
 
 ---
 
-## Part 1 — The key server (do this first)
+## Part 1 — The key server (the remaining work)
 
 The client refuses to run modules without a valid key, and the key list cannot live inside
 the jar, because anyone can unzip a jar and delete the branch that reads it. So the keys live
@@ -80,9 +89,17 @@ are kept for 90 days past their expiry so the admin list can still show them as 
 
 ---
 
-## Part 2 — The site
+## Part 2 — The site (already done)
 
-### Option A — Cloudflare Pages (recommended, same account)
+The site is **live** at <https://somone290.github.io/utility-client/> on GitHub Pages, wired up
+by `.github/workflows/pages.yml`. Every push that touches `site/` republishes it. Admin panel:
+
+<https://somone290.github.io/utility-client/#admin>
+
+There is nothing left to do here. The options below are only relevant if you ever want to move
+it, for example onto Cloudflare so the site and the Worker share an account.
+
+### Option A — Cloudflare Pages (same account as the Worker)
 
 1. Cloudflare dashboard → **Workers & Pages** → **Create** → **Pages** → **Connect to Git**
 2. Connect a GitHub repository, or choose **Direct Upload**
@@ -93,41 +110,11 @@ are kept for 90 days past their expiry so the admin list can still show them as 
    - **Build output directory**: `site`
 4. Deploy. You get `https://utilityclient.pages.dev`
 
-### Option B — GitHub Pages (free, no Cloudflare needed for the site)
+> **Note:** the site is already live at <https://somone290.github.io/utility-client/> on
+> GitHub Pages, so this whole step is optional. It is only worth doing if you would rather
+> host the site on the same Cloudflare account as the Worker.
 
-1. Push this repo to GitHub
-2. **Settings** → **Pages** → **Source: Deploy from a branch** → `main` / `root`
-3. But the site is in the `site/` folder, so either move it to the repo root, or add a
-   `.github/workflows/pages.yml`:
-
-```yaml
-name: Deploy site
-on:
-  push:
-    branches: [main]
-    paths: ['site/**']
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    permissions:
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: site
-      - id: deployment
-        uses: actions/deploy-pages@v4
-```
-
-You get `https://YOUR-USERNAME.github.io`
-
-### Option C — Just open it locally
+### Option B — Just open it locally
 
 Double-click `site/index.html`. Everything works except the admin panel's key generation,
 which needs a real `http(s)` origin to call the Worker.
@@ -136,7 +123,7 @@ which needs a real `http(s)` origin to call the Worker.
 
 ## Part 3 — Issuing your first key
 
-1. Visit `https://utilityclient.pages.dev/#admin`
+1. Visit <https://somone290.github.io/utility-client/#admin>
 2. Enter the panel password
 3. Paste your **key server URL** and your **ADMIN_TOKEN**, then **Save and connect**
 4. Pick a plan — **1 Day**, **1 Week**, **1 Month** or **Permanent**
@@ -181,13 +168,19 @@ What you can get for nothing:
 
 | Option | Address | Notes |
 | --- | --- | --- |
+| **GitHub Pages** | `somone290.github.io/utility-client` | **Live now.** Free, no extra setup |
 | Cloudflare Pages | `utilityclient.pages.dev` | Free forever, same account as the Worker |
-| GitHub Pages | `username.github.io` | Free, needs a GitHub repo |
 | Netlify / Vercel | `utilityclient.netlify.app` | Free tier, drag and drop |
 | Cloudflare custom domain | `yourname.com` | Only if you already own a domain |
 
-`utilityclient.pages.dev` is the closest thing to what you asked for that is genuinely free,
-and it can be pointed at a real domain later without changing any code.
+The site is running on GitHub Pages at <https://somone290.github.io/utility-client/>, which is
+free and needs nothing further. If you buy a domain later you can point it at GitHub Pages or
+move the site to Cloudflare Pages without touching any code.
+
+One thing to know: a GitHub **project** page lives under `/utility-client/`, not at the bare
+domain root. That is normal and does not affect anything. If you ever want the shorter
+`somone290.github.io` address, the repository would have to be renamed to
+`somone290.github.io`, which GitHub allows once per account.
 
 ---
 

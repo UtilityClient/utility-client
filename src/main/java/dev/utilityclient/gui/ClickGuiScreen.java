@@ -30,7 +30,7 @@ import java.util.Locale;
 public final class ClickGuiScreen extends Screen {
     private static final DateTimeFormatter TIME_FORMAT = DateTimeFormatter.ofPattern("HH:mm");
 
-    private static final String WEBSITE = "https://utilityclient.pages.dev";
+    private static final String WEBSITE = "https://somone290.github.io/utility-client/";
 
     private static final int SCRIM = 0xE8070810;
     private static final int WINDOW = 0xFF0B0B11;
