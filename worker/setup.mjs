@@ -50,13 +50,24 @@ function readToken() {
 
 function namespaceId() {
   const toml = readFileSync(TOML, "utf8");
-  const match = toml.match(/^id\s*=\s*"([^"]*)"/m);
+  const match = toml.match(/^id\s*=\s*"([^"]+)"/m);
   return match ? match[1].trim() : "";
 }
 
+// Wrangler rejects the whole config file if a binding has an empty id, and it validates
+// that before running any command at all, including "whoami". So the binding is only ever
+// written once a real id exists.
 function writeNamespaceId(id) {
-  const toml = readFileSync(TOML, "utf8");
-  writeFileSync(TOML, toml.replace(/^id\s*=\s*"[^"]*"/m, `id = "${id}"`), "utf8");
+  let toml = readFileSync(TOML, "utf8");
+  if (namespaceId()) {
+    toml = toml.replace(/^id\s*=\s*"[^"]*"/m, `id = "${id}"`);
+  } else {
+    toml = toml.replace(
+      /# The KV binding is added by setup\.mjs[\s\S]*$/m,
+      `[[kv_namespaces]]\nbinding = "KEYS"\nid = "${id}"\n`
+    );
+  }
+  writeFileSync(TOML, toml, "utf8");
 }
 
 /* ---------------------------------------------------------------- 1. auth */
@@ -70,7 +81,9 @@ if (who.status !== 0) {
 
   Run this in PowerShell and press Enter:
 
-      npx wrangler login
+      npx.cmd wrangler login
+
+  Use the .cmd. Plain "npx" is a PowerShell script this machine blocks.
 
   A browser tab opens. Choose Cloudflare, sign in, and click "Allow".
   Then come back and run:

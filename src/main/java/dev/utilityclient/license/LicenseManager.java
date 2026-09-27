@@ -66,7 +66,7 @@ public final class LicenseManager {
      * It can also be overridden without rebuilding using the
      * {@code -Dutilityclient.api=https://your-worker.workers.dev} JVM argument.
      */
-    public static final String DEFAULT_ENDPOINT = "https://utilityclient-api.YOUR-SUBDOMAIN.workers.dev";
+    public static final String DEFAULT_ENDPOINT = "https://utilityclient-keys.utilityclient.workers.dev";
 
     /** How long a successful check is trusted before asking the API again. */
     private static final long CACHE_MILLIS = Duration.ofHours(6).toMillis();

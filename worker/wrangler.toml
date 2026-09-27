@@ -3,7 +3,6 @@ main = "index.js"
 compatibility_date = "2026-09-27"
 workers_dev = true
 
-# Filled in by setup.mjs once the namespace exists. Do not edit by hand.
 [[kv_namespaces]]
 binding = "KEYS"
-id = ""
+id = "018147b590824a6c85f69891a52afb08"
