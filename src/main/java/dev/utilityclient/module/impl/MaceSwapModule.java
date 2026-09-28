@@ -1,9 +1,9 @@
 package dev.utilityclient.module.impl;
 
-import dev.utilityclient.mixin.AttackMixin;
 import dev.utilityclient.module.Module;
 import dev.utilityclient.module.ModuleCategory;
 import dev.utilityclient.module.ModuleSetting;
+import dev.utilityclient.util.AttackState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.Holder;
 import net.minecraft.network.chat.Component;
@@ -71,9 +71,9 @@ public final class MaceSwapModule extends Module {
         // sees nothing. See AttackMixin.
         boolean triggered = false;
         if (onAttack.value()) {
-            triggered = AttackMixin.consumeAttack();
+            triggered = AttackState.consume();
         } else {
-            AttackMixin.clear();
+            AttackState.clear();
         }
         if (!triggered && manualKey.value() && keyBind().consumePress(client)) {
             triggered = true;
