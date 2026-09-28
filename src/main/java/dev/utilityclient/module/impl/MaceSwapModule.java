@@ -85,14 +85,21 @@ public final class MaceSwapModule extends Module {
             }
         }
 
-        // Read from the mixin rather than polling the attack key. The game consumes that
-        // binding itself while handling input, before this tick runs, so polling it always
-        // sees nothing. See AttackMixin.
-        boolean triggered = false;
-        if (onAttack.value()) {
-            triggered = AttackState.consume();
+        // The swap itself is armed to run from inside the attack, not here. This tick is
+        // already too late: the attack has been resolved by the time it runs, so the hit
+        // would land with the old item. Arming it every tick means the swap is always
+        // waiting, and firing it from the mixin puts the mace in hand before the hit.
+        if (onAttack.value() && !realMenuOpen(client)) {
+            AttackState.arm(this::swapFromAttack);
         } else {
             AttackState.clear();
+        }
+
+        // The flag is only consulted when the attack trigger is off, which is the case the
+        // in-attack hook cannot cover.
+        boolean triggered = false;
+        if (!onAttack.value()) {
+            triggered = AttackState.consume();
         }
         if (!triggered && manualKey.value() && keyBind().consumePress(client)) {
             triggered = true;
@@ -101,6 +108,21 @@ public final class MaceSwapModule extends Module {
             return;
         }
 
+        swap(client);
+    }
+
+    /**
+     * Runs the swap at the moment the attack starts.
+     *
+     * <p>No menu check and no status message. The arming tick already established that the
+     * player is in the world with no menu open, and a message printed mid attack would land
+     * in the middle of the swing.
+     */
+    private void swapFromAttack() {
+        Minecraft client = Minecraft.getInstance();
+        if (client.player == null || client.level == null || realMenuOpen(client)) {
+            return;
+        }
         swap(client);
     }
 
