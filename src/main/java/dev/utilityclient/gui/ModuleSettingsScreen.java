@@ -1,5 +1,6 @@
 package dev.utilityclient.gui;
 
+import com.mojang.blaze3d.platform.InputConstants;
 import dev.utilityclient.config.ConfigManager;
 import dev.utilityclient.module.Module;
 import dev.utilityclient.module.ModuleSetting;
@@ -48,6 +49,10 @@ public final class ModuleSettingsScreen extends Screen {
     // Free text setting currently being edited, for the STRING type.
     private String editingSettingId;
     private String textBuffer = "";
+
+    // Key bind setting currently waiting for a key, for the KEYBIND type. This is separate
+    // from the module's own on/off keybind at the top of the screen.
+    private String listeningSettingId;
 
     public ModuleSettingsScreen(Module module) {
         super(Component.literal(module.displayName() + " settings"));
@@ -136,11 +141,42 @@ public final class ModuleSettingsScreen extends Screen {
                 drawColorRow(graphics, mouseX, mouseY, row);
             } else if (row.setting.type() == ModuleSetting.Type.STRING) {
                 drawTextRow(graphics, mouseX, mouseY, row);
+            } else if (row.setting.type() == ModuleSetting.Type.KEYBIND) {
+                drawKeybindRow(graphics, mouseX, mouseY, row);
             } else {
                 drawValueRow(graphics, mouseX, mouseY, row);
             }
         }
         graphics.disableScissor();
+    }
+
+    /**
+     * A key bind inside the settings list. Separate from the module on/off keybind above,
+     * so a module can stay switched on and still have an action key.
+     */
+    private void drawKeybindRow(GuiGraphicsExtractor graphics, int mouseX, int mouseY, SettingRow row) {
+        boolean hovered = inside(mouseX, mouseY, row.x, row.y, row.width, row.height);
+        boolean capturing = listeningSettingId != null && listeningSettingId.equals(row.setting.id());
+        boolean blink = (System.currentTimeMillis() / 400L) % 2L == 0L;
+
+        roundPanel(graphics, row.x, row.y, row.width, row.height, 9,
+                hovered ? 0xFF1E1A28 : PANEL, capturing ? PURPLE : (hovered ? PURPLE_DIM : BORDER));
+        graphics.text(font, row.setting.name(), row.x + 14, row.y + 12, TEXT, false);
+
+        dev.utilityclient.keybind.KeyBind bind = row.setting.keyBindValue();
+        String label = bind == null ? "NONE" : bind.displayName();
+        boolean bound = bind != null && bind.bound();
+
+        int boxX = row.x + row.width - 154;
+        roundRect(graphics, boxX, row.y + 18, 140, 28, 7,
+                capturing ? 0xFF101018 : 0xFF23232E);
+        graphics.text(font, capturing ? (blink ? "Listening..." : "") : label,
+                boxX + (140 - font.width(capturing ? "Listening..." : label)) / 2,
+                row.y + 27, capturing ? PURPLE : (bound ? TEXT : DIM), false);
+
+        graphics.text(font, capturing ? "Press a key, Esc cancels, Delete clears"
+                        : row.setting.description(),
+                row.x + 14, row.y + row.height - 14, capturing ? PURPLE_DIM : DIM, false);
     }
 
     /**
@@ -387,6 +423,13 @@ public final class ModuleSettingsScreen extends Screen {
                 }
                 return true;
             }
+            if (row.setting.type() == ModuleSetting.Type.KEYBIND) {
+                // Leave the main keybind capture alone, and abandon any text edit first.
+                listening = false;
+                editingSettingId = null;
+                listeningSettingId = row.setting.id();
+                return true;
+            }
             if (row.setting.type() == ModuleSetting.Type.STRING) {
                 editingSettingId = row.setting.id();
                 textBuffer = String.valueOf(row.setting.value());
@@ -480,6 +523,24 @@ public final class ModuleSettingsScreen extends Screen {
 
     @Override
     public boolean keyPressed(KeyEvent event) {
+        if (listeningSettingId != null) {
+            int code = event.key();
+            if (code == GLFW.GLFW_KEY_ESCAPE) {
+                listeningSettingId = null;
+                showMessage("Keybind unchanged.", MUTED);
+                return true;
+            }
+            if (code == GLFW.GLFW_KEY_DELETE || code == GLFW.GLFW_KEY_BACKSPACE) {
+                setKeybindSetting(listeningSettingId, null);
+                listeningSettingId = null;
+                return true;
+            }
+            if (!isModifierKey(code)) {
+                setKeybindSetting(listeningSettingId, InputConstants.Type.KEYSYM.getOrCreate(code));
+                listeningSettingId = null;
+            }
+            return true;
+        }
         if (listening) {
             int code = event.key();
             if (code == GLFW.GLFW_KEY_ESCAPE) {
@@ -544,6 +605,30 @@ public final class ModuleSettingsScreen extends Screen {
             return true;
         }
         return super.charTyped(event);
+    }
+
+    /** Applies a captured key to a KEYBIND setting, or clears it when null. */
+    @SuppressWarnings("unchecked")
+    private void setKeybindSetting(String settingId, InputConstants.Key key) {
+        for (SettingRow row : layout.rows) {
+            if (!row.setting.id().equals(settingId)) {
+                continue;
+            }
+            dev.utilityclient.keybind.KeyBind bind = row.setting.keyBindValue();
+            if (bind == null) {
+                return;
+            }
+            if (key == null) {
+                bind.clear();
+                showMessage(row.setting.name() + " cleared.", MUTED);
+            } else {
+                bind.set(key);
+                showMessage(row.setting.name() + " set to " + bind.displayName() + ".", MUTED);
+            }
+            module.onSettingsChanged();
+            ConfigManager.save();
+            return;
+        }
     }
 
     private String valueOf(String settingId) {

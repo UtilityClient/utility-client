@@ -30,11 +30,13 @@ public abstract class HotbarThrowModule extends Module {
         WAITING_FOR_THROW
     }
 
+    public final ModuleSetting<dev.utilityclient.keybind.KeyBind> activateKey;
     public final ModuleSetting<Integer> switchDelay;
     public final ModuleSetting<Integer> returnDelay;
     public final ModuleSetting<Integer> timeout;
     public final ModuleSetting<Boolean> searchInventory;
     public final ModuleSetting<Boolean> showStatus;
+    public final ModuleSetting<Boolean> alsoUseModuleKey;
 
     protected Stage stage = Stage.IDLE;
     private int returnSlot = -1;
@@ -46,6 +48,10 @@ public abstract class HotbarThrowModule extends Module {
                                 ModuleCategory category, boolean byDefault) {
         super(id, displayName, description, category, byDefault, true, false);
 
+        activateKey = addSetting(ModuleSetting.keybindSetting("activate-key", "Activate key",
+                "The key that throws, while the module stays switched on.",
+                new dev.utilityclient.keybind.KeyBind()));
+
         switchDelay = addSetting(ModuleSetting.integerSetting("switch-delay", "Switch delay",
                 "Ticks between selecting the item and throwing it.", 1, 0, 20, 1));
         returnDelay = addSetting(ModuleSetting.integerSetting("return-delay", "Return delay",
@@ -56,6 +62,8 @@ public abstract class HotbarThrowModule extends Module {
                 "Look through your whole inventory, not just the hotbar. Slower.", false));
         showStatus = addSetting(ModuleSetting.booleanSetting("status", "Show status",
                 "Print a line in chat when it cannot find one.", true));
+        alsoUseModuleKey = addSetting(ModuleSetting.booleanSetting("module-key", "Also use module key",
+                "Let the module's own on/off keybind throw as well, not just switch it.", false));
     }
 
     @Override
@@ -84,7 +92,19 @@ public abstract class HotbarThrowModule extends Module {
 
         switch (stage) {
             case IDLE -> {
-                if (keyBind().consumePress(client)) {
+                // The activate key is the real trigger, so the module can sit switched on.
+                // The module's own keybind is only consulted when that extra option is on,
+                // and even then it has already been consumed by the toggle by this point.
+                boolean pressed = false;
+                if (activateKey.value().bound() && activateKey.value().consumePress(client)) {
+                    pressed = true;
+                } else {
+                    activateKey.value().sync(client);
+                }
+                if (!pressed && alsoUseModuleKey.value() && keyBind().consumePress(client)) {
+                    pressed = true;
+                }
+                if (pressed) {
                     begin(client);
                 }
             }

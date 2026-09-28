@@ -76,7 +76,7 @@ public final class ConfigManager {
             data.keybinds.put(module.id(), module.keyBind().save());
             Map<String, Object> moduleSettings = new LinkedHashMap<>();
             for (ModuleSetting<?> setting : module.settings()) {
-                moduleSettings.put(setting.id(), setting.value());
+                moduleSettings.put(setting.id(), setting.saveValue());
             }
             data.settings.put(module.id(), moduleSettings);
         }

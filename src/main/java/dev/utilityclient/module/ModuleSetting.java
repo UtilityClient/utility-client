@@ -1,5 +1,7 @@
 package dev.utilityclient.module;
 
+import dev.utilityclient.keybind.KeyBind;
+
 import java.util.List;
 import java.util.Locale;
 
@@ -10,7 +12,8 @@ public final class ModuleSetting<T> {
         DOUBLE,
         MODE,
         COLOR,
-        STRING
+        STRING,
+        KEYBIND
     }
 
     private final String id;
@@ -66,6 +69,14 @@ public final class ModuleSetting<T> {
     }
 
     /**
+     * A key bound inside the settings list, separate from the module's own on/off keybind.
+     * Used where a module needs an action key that works while the module stays switched on.
+     */
+    public static ModuleSetting<KeyBind> keybindSetting(String id, String name, String description, KeyBind value) {
+        return new ModuleSetting<>(id, name, description, Type.KEYBIND, value, List.of(), 0, 0, 0);
+    }
+
+    /**
      * A 24 bit RGB colour (0xRRGGBB) edited with an in-GUI colour picker.
      */
     public static ModuleSetting<Integer> colorSetting(String id, String name, String description, int rgb) {
@@ -99,10 +110,18 @@ public final class ModuleSetting<T> {
         if (value instanceof Double doubleValue) {
             return String.format(Locale.ROOT, "%.2f", doubleValue);
         }
+        if (value instanceof KeyBind bind) {
+            return bind.displayName();
+        }
         if (type == Type.COLOR && value instanceof Integer rgb) {
             return String.format(Locale.ROOT, "#%06X", rgb & 0xFFFFFF);
         }
         return String.valueOf(value);
+    }
+
+    /** The key bind behind a KEYBIND setting, or null for every other type. */
+    public KeyBind keyBindValue() {
+        return value instanceof KeyBind bind ? bind : null;
     }
 
     public int colorValue() {
@@ -174,7 +193,27 @@ public final class ModuleSetting<T> {
                     }
                 }
             }
+            case KEYBIND -> {
+                if (value instanceof KeyBind bind) {
+                    bind.load(String.valueOf(storedValue));
+                }
+            }
+            case STRING -> {
+                // Free text is stored as written, with no validation to fail.
+                setValue(String.valueOf(storedValue));
+            }
         }
+    }
+
+    /**
+     * Value for the config file. Key binds are flattened to the same short string the
+     * module's own keybind uses, so they read the same way in the JSON.
+     */
+    public Object saveValue() {
+        if (value instanceof KeyBind bind) {
+            return bind.save();
+        }
+        return value;
     }
 
     public void adjust(int direction) {
