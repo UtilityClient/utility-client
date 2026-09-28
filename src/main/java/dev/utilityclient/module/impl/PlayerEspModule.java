@@ -31,6 +31,8 @@ import java.util.List;
  * are projected, and the result is drawn on screen. There is no packet here, so there is no
  * packet to inspect. What gives it away is entirely what you do with what you see.
  */
+import java.util.Locale;
+
 public final class PlayerEspModule extends Module implements EspProjection.Settings {
     public final ModuleSetting<String> boxStyle;
     public final ModuleSetting<Integer> lineThickness;
@@ -161,7 +163,11 @@ public final class PlayerEspModule extends Module implements EspProjection.Setti
 
     @Override
     public String style() {
-        return boxStyle.value();
+        // Lower cased on the way out. The mode options are stored as display strings, so
+        // "Skeleton" with a capital, and the painter compares against lower case literals.
+        // Returning the raw value made every comparison fail, which silently drew nothing for
+        // every style, not just the skeleton.
+        return boxStyle.value().toLowerCase(Locale.ROOT);
     }
 
     @Override

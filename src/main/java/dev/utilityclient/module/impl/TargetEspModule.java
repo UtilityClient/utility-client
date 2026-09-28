@@ -31,6 +31,8 @@ import java.util.List;
  * <p>Nothing is sent to the server. It reads the entity the client already has, projects it,
  * and draws.
  */
+import java.util.Locale;
+
 public final class TargetEspModule extends Module implements EspProjection.Settings {
     public final ModuleSetting<String> boxStyle;
     public final ModuleSetting<Integer> lineThickness;
@@ -146,7 +148,10 @@ public final class TargetEspModule extends Module implements EspProjection.Setti
 
     @Override
     public String style() {
-        return boxStyle.value();
+        // Lower cased on the way out, because the mode options are stored as display strings
+        // like "Skeleton" and the painter compares against lower case literals. Comparing the
+        // raw value made every style fail to match, so nothing was ever drawn.
+        return boxStyle.value().toLowerCase(Locale.ROOT);
     }
 
     @Override

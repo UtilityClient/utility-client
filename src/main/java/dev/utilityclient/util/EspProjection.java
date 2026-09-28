@@ -303,7 +303,11 @@ public final class EspProjection {
             return;
         }
         int thickness = settings.thickness();
-        String style = settings.style();
+        // Normalised here as well as in the modules. These are compared with equals, and the
+        // options are human readable strings like "Skeleton", so a case mismatch would make
+        // every style fail to match and silently draw nothing at all. That happened, and it
+        // looks identical to "the module is broken" rather than "a string did not match".
+        String style = settings.style().toLowerCase(java.util.Locale.ROOT);
 
         for (EspMarker marker : markers) {
             int width = marker.width();
