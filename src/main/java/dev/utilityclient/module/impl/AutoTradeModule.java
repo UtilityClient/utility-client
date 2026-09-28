@@ -10,28 +10,26 @@ import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.MerchantContainer;
 import net.minecraft.world.inventory.MerchantMenu;
 import net.minecraft.world.inventory.Slot;
-import net.minecraft.world.item.trading.ItemCost;
 import net.minecraft.world.item.trading.MerchantOffer;
 import net.minecraft.world.item.trading.MerchantOffers;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 
 /**
- * Trades the offer you pick, over and over, feeding the payment from your own inventory.
+ * Trades the offer you pick, over and over, until the villager runs out of it.
  *
- * <p>Open a villager, click the trade you want, and it does the rest: it moves the required
- * items from your inventory into the trade slots, clicks the result, and repeats until the
- * villager runs out of that offer. When the offer disappears the window closes itself.
+ * <p>Open a villager, click the trade you want, and it does the rest: it clicks the result
+ * repeatedly until the offer is exhausted, then closes the window. You place the payment
+ * yourself, exactly as you would by hand.
  *
- * <p>Filling the payment is the whole point, and it is done by calling the merchant menu's
- * own private routine rather than by moving items here. That matters more than it sounds.
- * There is no click that fills a merchant payment slot: a quick move in a merchant window
- * sends items to your hotbar instead, so the only way to do it by hand is to pick items up
- * and place them, which is exactly the sort of thing that goes wrong and eats items. An
- * earlier build of this module did it by hand and ate the player's sticks. Reusing the game's
- * logic means only the items the offer actually asks for are ever touched, and it stops as
- * soon as the slots are full.
+ * <p>The payment is deliberately never touched. The merchant window already fills the payment
+ * slots itself the moment you click an offer, and keeps them topped up while the trade is
+ * available, so there is nothing useful for this module to do there. Two earlier attempts to
+ * help anyway, one moving items by hand and one calling the game's own payment routine, both
+ * ended up taking the player's items without trading. The routine was the more surprising
+ * failure: it moves items from the inventory into the payment slots as a local change only,
+ * and the game calls it in a context where the server is already watching, so calling it
+ * behind the game's back quietly ate sticks. This module now only ever clicks the result slot.
  *
  * <p>How it knows a trade is finished is worth spelling out. A villager removes an offer
  * from its list once it is exhausted, so the list getting shorter is the reliable signal.
@@ -40,7 +38,7 @@ import java.lang.reflect.Method;
  * on the client after the server has already removed it.
  *
  * <p>There is a hard trade cap as well, and it is not optional. A server villager that
- * restocks, or one with an effectively unlimited offer, would otherwise drain your inventory
+ * restocks, or one with an effectively unlimited offer, would otherwise drain your currency
  * forever. If the trade count does not move for a while, it also stops on its own, which
  * covers running out of payment.
  */
@@ -54,18 +52,10 @@ public final class AutoTradeModule extends Module {
     private static final int RESULT_Y = 28;
 
     /**
-     * The two payment slots and the result, in the fixed order the merchant menu uses.
-     *
-     * <p>These are only used as a fallback, because the result slot is found by position.
-     * A server that shifts the layout would be caught by that check rather than trusted.
+     * The result slot, in the fixed order the merchant menu uses. Only a fallback for when the
+     * position search below finds nothing, which on a real merchant window it never does.
      */
-    private static final int PAYMENT1_SLOT = 0;
-    private static final int PAYMENT2_SLOT = 1;
     private static final int RESULT_SLOT = 2;
-
-    /** The merchant menu's own inventory range, 3 to 39 exclusive. */
-    private static final int INVENTORY_START = 3;
-    private static final int INVENTORY_END = 39;
 
     public final ModuleSetting<Integer> delay;
     public final ModuleSetting<Integer> maxTrades;
@@ -77,13 +67,6 @@ public final class AutoTradeModule extends Module {
     private static Field tradeContainerField;
     private static boolean reflectionWarned;
 
-    /**
-     * The merchant menu's private payment filling routine. Resolved once and reused, and
-     * failing to find it only means the module reports out of payment rather than crashing.
-     */
-    private static Method moveFromInventoryToPaymentSlot;
-    private static boolean paymentWarned;
-
     private MerchantOffer tracked;
     private int baselineOffers = -1;
     private int trades;
@@ -94,34 +77,18 @@ public final class AutoTradeModule extends Module {
 
     public AutoTradeModule() {
         super("auto-trade", "Auto Villager Trader",
-                "Click a trade once and it feeds the payment from your inventory and trades "
-                        + "over and over until the villager runs out.",
+                "Click a trade once and it keeps trading it over and over until that villager "
+                        + "runs out of the offer.",
                 ModuleCategory.MISC, false, true, true);
-
-        // Resolved eagerly so the first trade does not pay for a failed lookup, and so a
-        // missing method is discovered while the class loads rather than mid trade.
-        try {
-            moveFromInventoryToPaymentSlot = MerchantMenu.class
-                    .getDeclaredMethod("moveFromInventoryToPaymentSlot", int.class, ItemCost.class);
-            moveFromInventoryToPaymentSlot.setAccessible(true);
-        } catch (ReflectiveOperationException | RuntimeException exception) {
-            // Not fatal, but it must not be silent. Without this method the module cannot top
-            // up the payment and will only ever report itself out of payment, which looks
-            // exactly like having none of the items. Saying so once is far more useful.
-            moveFromInventoryToPaymentSlot = null;
-            System.out.println("[Utility Client] Auto Villager Trader cannot auto fill the "
-                    + "trade payment, the method it needs is missing: " + exception);
-        }
 
         delay = addSetting(ModuleSetting.integerSetting("delay", "Delay",
                 "Ticks to wait between trades.", 8, 1, 60, 1));
         maxTrades = addSetting(ModuleSetting.integerSetting("max-trades", "Hard cap",
                 "Safety limit. Stops after this many trades even if the villager still has stock.",
                 2304, 1, 2304, 64));
-        idleTimeout = addSetting(ModuleSetting.integerSetting("idle-timeout", "Out of payment after",
-                "Stops if this many ticks pass with the payment slots still not fillable, "
-                        + "which normally means you have run out of the items the trade wants.",
-                200, 20, 1200, 20));
+        idleTimeout = addSetting(ModuleSetting.integerSetting("idle-timeout", "Stall timeout",
+                "Stops if this many ticks pass with the offer not becoming available, which "
+                        + "normally means you have run out of payment.", 200, 20, 1200, 20));
         closeWhenDone = addSetting(ModuleSetting.booleanSetting("close-when-done", "Close when done",
                 "Close the trade window once the offer is used up.", true));
         showStatus = addSetting(ModuleSetting.booleanSetting("status", "Show status",
@@ -200,30 +167,31 @@ public final class AutoTradeModule extends Module {
             return;
         }
 
-        // Put the payment in first. This is the step the module is actually for: the player
-        // clicks a trade once and this keeps feeding it from their inventory, over and over,
-        // rather than trading a single time and stopping.
-        if (!fillPayment(client, menu, active)) {
-            // The payment slots are still not satisfied. Either the player has run out or the
-            // offer needs something they do not have. Wait, but do not spam clicks.
+        // The payment is never touched here. The merchant window already fills the payment
+        // slots itself the moment the player clicks an offer, and it keeps them topped up
+        // while the trade is available, so all this has to do is click the result over and
+        // over.
+        //
+        // An earlier build tried to help by calling the game's own payment filling routine on
+        // every tick. That was wrong in a way that was not obvious: the routine moves items
+        // out of the player's inventory into the payment slots as a local change only, and
+        // nothing tells the server. So a 32 stick for 1 emerald trade would quietly swallow
+        // sticks from the player's inventory without ever trading, which looked exactly like
+        // the module grabbing the wrong item. Reusing the game's code was not the safe option
+        // here, because the game calls it in a context where the server is already watching.
+        //
+        // Only ever click when the server has actually put a result in the slot, which it
+        // only does once the payment is present and the trade is genuinely available.
+        if (!resultIsOffered(menu, resultSlot)) {
             idleTicks++;
             if (idleTicks >= idleTimeout.value()) {
-                finish(client, "Out of payment for " + resultName);
+                finish(client, "No trade became available - out of payment, or the offer is gone");
             }
             return;
         }
 
-        // Only click once the payment is in and the server has actually put a result in the
-        // slot. Clicking before that is what made an earlier build eat the payment instead of
-        // trading.
-        if (!resultIsOffered(menu, resultSlot)) {
-            // The payment went in but the server has not acknowledged the result yet. This is
-            // normal for a tick or two and is not a stall, so it does not count against the
-            // stall timeout.
-            return;
-        }
-
-        // A plain left click, the same one a player makes on the result slot.
+        // A plain left click, the same one a player makes on the result slot. Nothing here
+        // touches the payment slots or the inventory.
         client.gameMode.handleContainerInput(menu.containerId, resultSlot, 0,
                 ContainerInput.PICKUP, client.player);
         trades++;
@@ -231,74 +199,6 @@ public final class AutoTradeModule extends Module {
         idleTicks = 0;
     }
 
-    /* ---------------------------------------------------------------- payment */
-
-    /**
-     * Tops the payment slots up from the player's inventory, using the game's own routine.
-     *
-     * <p>This deliberately does not move items by hand. A merchant menu's quick move sends
-     * inventory items to the hotbar, not to the payment slots, so there is no click that
-     * fills payment. The game has a private method that does exactly the right thing, walking
-     * the inventory and matching against the offer's own item costs, and calling that is both
-     * shorter and far safer than reimplementing it: it only ever moves items that the offer
-     * genuinely asks for, and it stops as soon as the slots are full.
-     *
-     * <p>An earlier version of this module moved items itself and ate the player's sticks.
-     * Reusing the game's logic is what removes that risk.
-     *
-     * @return true when the payment slots look satisfied afterwards
-     */
-    private static boolean fillPayment(Minecraft client, MerchantMenu menu, MerchantOffer offer) {
-        if (moveFromInventoryToPaymentSlot == null) {
-            return paymentSatisfied(menu, offer);
-        }
-        try {
-            // Cost A, then cost B when the offer has a second payment.
-            moveFromInventoryToPaymentSlot.invoke(menu, PAYMENT1_SLOT, offer.getItemCostA());
-            offer.getItemCostB().ifPresent(cost -> {
-                try {
-                    moveFromInventoryToPaymentSlot.invoke(menu, PAYMENT2_SLOT, cost);
-                } catch (ReflectiveOperationException | RuntimeException ignored) {
-                    // A second payment that cannot be filled simply will not appear, and the
-                    // satisfaction check below reports it.
-                }
-            });
-            return paymentSatisfied(menu, offer);
-        } catch (ReflectiveOperationException | RuntimeException exception) {
-            if (!paymentWarned) {
-                paymentWarned = true;
-                System.out.println("[Utility Client] Could not fill the trade payment: "
-                        + exception);
-            }
-            return paymentSatisfied(menu, offer);
-        }
-    }
-
-    /**
-     * True when both payment slots hold enough for the trade.
-     *
-     * <p>Checked rather than assumed, because the fill runs locally and the server has not
-     * necessarily agreed yet. Counting the required amount out of the slots that are actually
-     * filled is the only trustworthy test.
-     */
-    private static boolean paymentSatisfied(MerchantMenu menu, MerchantOffer offer) {
-        return hasAtLeast(menu, PAYMENT1_SLOT, offer.getItemCostA())
-                && offer.getItemCostB().map(cost -> hasAtLeast(menu, PAYMENT2_SLOT, cost))
-                .orElse(true);
-    }
-
-    private static boolean hasAtLeast(MerchantMenu menu, int slotIndex, ItemCost cost) {
-        try {
-            Slot slot = menu.getSlot(slotIndex);
-            if (slot == null) {
-                return false;
-            }
-            net.minecraft.world.item.ItemStack stack = slot.getItem();
-            return !stack.isEmpty() && cost.test(stack) && stack.getCount() >= cost.count();
-        } catch (RuntimeException exception) {
-            return false;
-        }
-    }
 
     /**
      * True when the result slot is holding something, which the server only does once a
