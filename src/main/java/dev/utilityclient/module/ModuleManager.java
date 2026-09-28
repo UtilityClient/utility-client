@@ -7,6 +7,7 @@ import dev.utilityclient.module.impl.AutoTradeModule;
 import dev.utilityclient.module.impl.AutoBuilderModule;
 import dev.utilityclient.module.impl.KeyPearlModule;
 import dev.utilityclient.module.impl.KeyWindburstModule;
+import dev.utilityclient.module.impl.ElySwapModule;
 import dev.utilityclient.module.impl.AutoWalkModule;
 import dev.utilityclient.module.impl.BlockHighlightModule;
 import dev.utilityclient.module.impl.ClickHolderModule;
@@ -55,6 +56,7 @@ public final class ModuleManager {
         instance.register(new AutoTradeModule());
         instance.register(new KeyPearlModule());
         instance.register(new KeyWindburstModule());
+        instance.register(new ElySwapModule());
         instance.register(new AutoBuilderModule());
         instance.register(new AntiLeakerModule());
         instance.register(new FreeLookModule());
