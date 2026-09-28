@@ -5,6 +5,7 @@ import net.minecraft.client.Minecraft;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 /**
@@ -27,5 +28,14 @@ public final class AttackMixin {
     @Inject(method = "startAttack", at = @At("HEAD"))
     private void utilityClient$onStartAttack(CallbackInfoReturnable<Boolean> callback) {
         AttackState.mark();
+    }
+
+    /**
+     * The same problem for right click. Ely Swap needs to know the player used the item, and
+     * the use binding is consumed by the game during input handling before the tick ends.
+     */
+    @Inject(method = "startUseItem", at = @At("HEAD"))
+    private void utilityClient$onStartUseItem(CallbackInfo callback) {
+        dev.utilityclient.util.UseState.mark();
     }
 }

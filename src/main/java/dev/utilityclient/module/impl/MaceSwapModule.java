@@ -4,10 +4,10 @@ import dev.utilityclient.module.Module;
 import dev.utilityclient.module.ModuleCategory;
 import dev.utilityclient.module.ModuleSetting;
 import dev.utilityclient.util.AttackState;
+import dev.utilityclient.util.HotbarMemory;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.Holder;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -35,6 +35,8 @@ public final class MaceSwapModule extends Module {
     public final ModuleSetting<Boolean> onAttack;
     public final ModuleSetting<Boolean> manualKey;
     public final ModuleSetting<Boolean> skipIfHeld;
+    public final ModuleSetting<Boolean> switchBack;
+    public final ModuleSetting<Integer> returnDelay;
     public final ModuleSetting<Boolean> showStatus;
 
     public MaceSwapModule() {
@@ -51,6 +53,13 @@ public final class MaceSwapModule extends Module {
                 "Let the module keybind swap as well, not just switch it on and off.", false));
         skipIfHeld = addSetting(ModuleSetting.booleanSetting("skip-if-held", "Skip if already held",
                 "Do nothing if the mace you want is already in hand.", true));
+        switchBack = addSetting(ModuleSetting.booleanSetting("switch-back", "Switch back",
+                "Put your original item back in hand shortly after swapping, so you are not "
+                        + "left holding a mace. Returns only if you have not scrolled away "
+                        + "yourself in the meantime.", false));
+        returnDelay = addSetting(ModuleSetting.integerSetting("return-delay", "Return delay",
+                "How long to hold the mace before switching back, in ticks. 20 ticks is one "
+                        + "second.", 2, 1, 40, 1));
         showStatus = addSetting(ModuleSetting.booleanSetting("status", "Show status",
                 "Print a line in chat when it swaps or cannot find one.", true));
     }
@@ -58,12 +67,22 @@ public final class MaceSwapModule extends Module {
     @Override
     public void tick(Minecraft client) {
         if (client.player == null || client.level == null) {
+            HotbarMemory.forget();
             return;
         }
         // Equipping while a real menu is open would fight with whatever the player is
         // clicking. Our own menus are excluded, see realMenuOpen.
         if (realMenuOpen(client)) {
             return;
+        }
+
+        // A pending return is handled before anything else, and cancelling a pending return
+        // is the first thing a fresh swap does. Without this, an attack one tick before the
+        // timer expired would swap to the mace and then immediately bounce back.
+        if (HotbarMemory.tickReturn()) {
+            if (HotbarMemory.returnIfUnmoved(client) && showStatus.value()) {
+                say(client, "Switched back.");
+            }
         }
 
         // Read from the mixin rather than polling the attack key. The game consumes that
@@ -93,6 +112,14 @@ public final class MaceSwapModule extends Module {
         return client.gui.screen() != null
                 && !(client.gui.screen() instanceof dev.utilityclient.gui.ClickGuiScreen)
                 && !(client.gui.screen() instanceof dev.utilityclient.gui.ModuleSettingsScreen);
+    }
+
+    @Override
+    public void onDisable() {
+        // Drop any pending return, so switching the module off never leaves it firing a
+        // swap later on.
+        HotbarMemory.forget();
+        AttackState.clear();
     }
 
     /* ---------------------------------------------------------------- swap */
@@ -137,8 +164,15 @@ public final class MaceSwapModule extends Module {
             return;
         }
 
-        client.player.getInventory().setSelectedSlot(best);
-        client.player.connection.send(new ServerboundSetCarriedItemPacket(best));
+        // Swapping again while a return is pending means the player wants the mace for
+        // longer, so the old timer is dropped rather than firing against the new swap.
+        HotbarMemory.forget();
+        if (!HotbarMemory.swapTo(client, best)) {
+            return;
+        }
+        if (switchBack.value()) {
+            HotbarMemory.returnAfter(returnDelay.value());
+        }
 
         if (showStatus.value()) {
             say(client, "Swapped to " + label + " mace.");
