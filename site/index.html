@@ -42,7 +42,7 @@
         <a class="btn btn-ghost" href="#modules" data-edit="hero.cta2" data-label="Hero button 2">Browse modules</a>
       </div>
       <dl class="facts" data-repeat="fact">
-        <div><dt data-edit="facts.0.v" data-label="Stat 1 value">22</dt><dd data-edit="facts.0.l" data-label="Stat 1 label">modules</dd></div>
+        <div><dt data-edit="facts.0.v" data-label="Stat 1 value">23</dt><dd data-edit="facts.0.l" data-label="Stat 1 label">modules</dd></div>
         <div><dt data-edit="facts.1.v" data-label="Stat 2 value">1 key</dt><dd data-edit="facts.1.l" data-label="Stat 2 label">opens the menu</dd></div>
         <div><dt data-edit="facts.2.v" data-label="Stat 3 value">0</dt><dd data-edit="facts.2.l" data-label="Stat 3 label">server side changes</dd></div>
         <div><dt data-edit="facts.3.v" data-label="Stat 4 value">JSON</dt><dd data-edit="facts.3.l" data-label="Stat 4 label">config file</dd></div>
@@ -96,9 +96,10 @@
     </div>
 
     <p class="note-bar" data-edit="modules.note" data-label="Modules note">
-      <strong>No combat automation.</strong> The Combat category holds convenience switches like
-      Mace Swap, which only change which hotbar slot you are holding. Nothing here aims, times or
-      lands a hit for you, and there is no combat macro of any kind.
+      <strong>Read this first.</strong> Nothing here aims, times or lands a hit for you, and there
+      is no combat macro of any kind. But Target ESP is an x-ray, it shows you players the server is
+      deliberately hiding, and it is the most commonly banned thing a Minecraft client can do. It
+      is here because private servers with friends asked for it. Do not load it on a public server.
     </p>
 
     <div class="filter-bar">
@@ -243,6 +244,16 @@
           <li data-edit="modules.target lock.b0" data-label="target lock bullet 1">A circle in the middle of the screen, with your own FOV size and smoothness</li>
           <li data-edit="modules.target lock.b1" data-label="target lock bullet 2">Only ever locks someone you can already see, and drops the lock the moment you cannot</li>
           <li data-edit="modules.target lock.b2" data-label="target lock bullet 3">Mouse keys work on the activate key</li>
+        </ul>
+      </article>
+
+      <article class="card module" data-cat="VISUAL" data-name="target esp">
+        <div class="module-top"><h3 data-edit="modules.target esp.name" data-label="target esp name">Target ESP</h3><span class="tag" data-edit="modules.target esp.tag" data-label="target esp tag">Visual</span></div>
+        <p data-edit="modules.target esp.desc" data-label="target esp description">Draws a marker on players, including ones behind walls. This is an x-ray and it will get your account banned on any public server.</p>
+        <ul class="module-list">
+          <li data-edit="modules.target esp.b0" data-label="target esp bullet 1">Corner, box or both, with your own colours, thickness and range</li>
+          <li data-edit="modules.target esp.b1" data-label="target esp bullet 2">Optional tracers, names and distances</li>
+          <li data-edit="modules.target esp.b2" data-label="target esp bullet 3">Turn "Through walls" off to mark only players you are already looking at</li>
         </ul>
       </article>
 

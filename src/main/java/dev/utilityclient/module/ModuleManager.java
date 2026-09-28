@@ -23,6 +23,7 @@ import dev.utilityclient.module.impl.NoParticlesModule;
 import dev.utilityclient.module.impl.PlayerRadarModule;
 import dev.utilityclient.module.impl.SnapTurnModule;
 import dev.utilityclient.module.impl.TargetLockModule;
+import dev.utilityclient.module.impl.TargetEspModule;
 import dev.utilityclient.module.impl.ZoomModule;
 import net.minecraft.client.Minecraft;
 
@@ -66,6 +67,7 @@ public final class ModuleManager {
         instance.register(new FreeCamModule());
         instance.register(new ZoomModule());
         instance.register(new TargetLockModule());
+        instance.register(new TargetEspModule());
     }
 
     public static ModuleManager get() {
