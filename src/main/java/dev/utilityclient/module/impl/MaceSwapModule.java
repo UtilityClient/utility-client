@@ -13,16 +13,17 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.enchantment.Enchantment;
 import net.minecraft.world.item.enchantment.Enchantments;
 
-import java.util.List;
 import java.util.Locale;
 
 /**
- * Click the module in the menu and it puts a mace in your hand.
+ * Swaps to a mace the moment you attack.
  *
- * <p>It swaps on enable, not on a timer and not on a key, because the module card click is
- * already the press. The setting picks which mace to reach for when you own more than one:
- * a plain mace, or the one carrying Wind Burst or Density. It matches the real enchantment
- * registry keys rather than display text, so it works on any language client.
+ * <p>The trigger is the game's own attack binding, so swinging at a mob and starting to
+ * break a block both count. The setting picks which mace to reach for when you own more
+ * than one: a plain mace, or the one carrying Wind Burst, Density or Breach. It matches the
+ * real enchantment registry keys rather than display text, so it works on any language
+ * client, and when several maces qualify it takes the highest level of the enchantment you
+ * asked for.
  *
  * <p>Only the hotbar selection changes, and the server is told separately, so what you end
  * up holding is the same on both sides. Nothing is picked up, moved or consumed, and this
@@ -30,17 +31,23 @@ import java.util.Locale;
  */
 public final class MaceSwapModule extends Module {
     public final ModuleSetting<String> prefer;
+    public final ModuleSetting<Boolean> onAttack;
+    public final ModuleSetting<Boolean> manualKey;
     public final ModuleSetting<Boolean> skipIfHeld;
     public final ModuleSetting<Boolean> showStatus;
 
     public MaceSwapModule() {
         super("mace-swap", "Mace Swap",
-                "Clicking this in the menu swaps to a mace. No keybind needed.",
+                "Swaps to a mace when you attack.",
                 ModuleCategory.COMBAT, false, true, false);
 
         prefer = addSetting(ModuleSetting.modeSetting("prefer", "Swap to",
                 "Which mace to reach for when you have more than one.",
                 "Wind Burst", "Any mace", "Wind Burst", "Density", "Breach"));
+        onAttack = addSetting(ModuleSetting.booleanSetting("on-attack", "Swap when you attack",
+                "Swap to the mace whenever you swing at something.", true));
+        manualKey = addSetting(ModuleSetting.booleanSetting("manual-key", "Module key swaps too",
+                "Let the module keybind swap as well, not just switch it on and off.", false));
         skipIfHeld = addSetting(ModuleSetting.booleanSetting("skip-if-held", "Skip if already held",
                 "Do nothing if the mace you want is already in hand.", true));
         showStatus = addSetting(ModuleSetting.booleanSetting("status", "Show status",
@@ -48,16 +55,35 @@ public final class MaceSwapModule extends Module {
     }
 
     @Override
-    public void onEnable() {
-        // The card click is the press, so the swap happens the moment the module turns on.
-        swap(Minecraft.getInstance());
+    public void tick(Minecraft client) {
+        if (client.player == null || client.level == null) {
+            return;
+        }
+        // Equipping while a real menu is open would fight with whatever the player is
+        // clicking. Our own menus are excluded, see realMenuOpen.
+        if (realMenuOpen(client)) {
+            return;
+        }
+
+        // The game's own attack binding is the trigger, so this covers hitting a mob and
+        // starting to break a block alike.
+        boolean triggered = false;
+        if (onAttack.value() && client.options.keyAttack != null) {
+            triggered = client.options.keyAttack.consumeClick();
+        }
+        if (!triggered && manualKey.value() && keyBind().consumePress(client)) {
+            triggered = true;
+        }
+        if (!triggered) {
+            return;
+        }
+
+        swap(client);
     }
 
     /**
-     * True when a real game menu is open. Our own ClickGUI and settings screens do not count,
-     * because which item you are holding does not interfere with them. That distinction is
-     * the whole reason this module works at all: onEnable is only ever reached while the
-     * ClickGUI is on screen, so a plain "any screen open" check would block every swap.
+     * True when a real game menu is open. The ClickGUI and the settings screens are not a
+     * problem, since which item you are holding does not interfere with them.
      */
     private static boolean realMenuOpen(Minecraft client) {
         return client.gui.screen() != null
@@ -68,15 +94,6 @@ public final class MaceSwapModule extends Module {
     /* ---------------------------------------------------------------- swap */
 
     private void swap(Minecraft client) {
-        if (client.player == null || client.level == null) {
-            return;
-        }
-        // Equipping while a real menu is open would fight with whatever the player is
-        // clicking. Our own menus are excluded, see realMenuOpen.
-        if (realMenuOpen(client)) {
-            return;
-        }
-
         String wanted = prefer.value();
         ResourceKey<Enchantment> required = keyFor(wanted);
         String label = labelFor(wanted);
@@ -97,7 +114,6 @@ public final class MaceSwapModule extends Module {
             if (level < 0) {
                 continue;
             }
-            // Prefer the highest level of the wanted enchantment when several maces match.
             if (level > bestLevel) {
                 bestLevel = level;
                 best = slot;
@@ -126,15 +142,14 @@ public final class MaceSwapModule extends Module {
     }
 
     /**
-     * Level of the wanted enchantment on this mace, or -1 when it does not have it.
-     * With no preference, any mace scores zero so the first one found is taken.
+     * Level of the wanted enchantment on this mace, or -1 when it does not have it. With no
+     * preference, any mace scores zero so the first one found is taken.
      */
     private static int levelOf(ItemStack stack, ResourceKey<Enchantment> required) {
         if (required == null) {
             return 0;
         }
-        List<Holder<Enchantment>> keys = List.copyOf(stack.getEnchantments().keySet());
-        for (Holder<Enchantment> holder : keys) {
+        for (Holder<Enchantment> holder : stack.getEnchantments().keySet()) {
             ResourceKey<Enchantment> key = holder.unwrapKey().orElse(null);
             if (key == null || !key.equals(required)) {
                 continue;

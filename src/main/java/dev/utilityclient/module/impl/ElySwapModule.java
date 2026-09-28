@@ -123,8 +123,9 @@ public final class ElySwapModule extends Module {
         }
 
         // Shift click. The game equips it and returns whatever was worn to the inventory.
-        client.gameMode.handleContainerInput(client.player.inventoryMenu.containerId, slot, 0,
-                ContainerInput.QUICK_MOVE, client.player);
+        // The slot has to be translated, see toMenuSlot.
+        client.gameMode.handleContainerInput(client.player.inventoryMenu.containerId,
+                toMenuSlot(slot), 0, ContainerInput.QUICK_MOVE, client.player);
 
         if (showStatus.value()) {
             say(client, "Swapped to " + what + ".");
@@ -147,6 +148,19 @@ public final class ElySwapModule extends Module {
             }
         }
         return -1;
+    }
+
+    /**
+     * Converts an Inventory index into the matching InventoryMenu slot.
+     *
+     * <p>These two do not use the same numbering, and getting it wrong is silent. The
+     * Inventory numbers the hotbar 0 to 8, but the InventoryMenu puts the crafting grid
+     * first, so its hotbar is 36 to 44. Clicking index 0 blindly hits the crafting result
+     * slot and does nothing at all, which is exactly what an earlier build did.
+     */
+    private static int toMenuSlot(int inventorySlot) {
+        // 9 to 35 line up in both, only the hotbar is offset.
+        return inventorySlot >= 9 ? inventorySlot : 36 + inventorySlot;
     }
 
     /**
