@@ -106,6 +106,11 @@ public abstract class HotbarThrowModule extends Module {
                 }
                 if (pressed) {
                     begin(client);
+                    // At zero delay, throw inside the same tick that the key went down, so
+                    // there is no wasted tick between swapping to the item and using it.
+                    if (stage == Stage.SWITCHING && switchDelay.value() == 0) {
+                        doThrow(client);
+                    }
                 }
             }
             case SWITCHING -> {
@@ -115,15 +120,18 @@ public abstract class HotbarThrowModule extends Module {
                 doThrow(client);
             }
             case WAITING_FOR_THROW -> {
-                timer++;
+                // Checked before the counter moves, so a throw that already registered does
+                // not cost an extra tick.
                 if (hasLeftHand(client)) {
                     if (timer < returnDelay.value()) {
+                        timer++;
                         return;
                     }
                     restore(client);
                     reset();
                     return;
                 }
+                timer++;
                 if (timer >= timeout.value()) {
                     if (showStatus.value()) {
                         say(client, "The throw did not register, putting your item back.");
@@ -161,6 +169,8 @@ public abstract class HotbarThrowModule extends Module {
         countBefore = countIn(client, found);
         timer = switchDelay.value();
         stage = Stage.SWITCHING;
+        // Packets go out in the order they are queued, so selecting and then using in the
+        // same tick is safe. The server sees the item change before the throw.
         select(client, found);
     }
 
