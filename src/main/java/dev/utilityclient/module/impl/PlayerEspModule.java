@@ -34,6 +34,7 @@ import java.util.List;
 public final class PlayerEspModule extends Module implements EspProjection.Settings {
     public final ModuleSetting<String> boxStyle;
     public final ModuleSetting<Integer> lineThickness;
+    public final ModuleSetting<Integer> skeletonThickness;
     public final ModuleSetting<Integer> boxAlpha;
     public final ModuleSetting<Integer> cornerLength;
     public final ModuleSetting<Double> maxRange;
@@ -56,9 +57,15 @@ public final class PlayerEspModule extends Module implements EspProjection.Setti
                 ModuleCategory.VISUAL, false, true, false);
 
         boxStyle = addSetting(ModuleSetting.modeSetting("box-style", "Style",
-                "How the marker is drawn around each player.", "Corners", "Corners", "Box", "Both"));
+                "How the marker is drawn around each player. Skeleton draws a stick figure, "
+                        + "Both draws the skeleton and the box together.",
+                "Corners", "Corners", "Box", "Skeleton", "Both"));
         lineThickness = addSetting(ModuleSetting.integerSetting("thickness", "Line thickness",
-                "How thick the marker lines are, in pixels.", 1, 1, 4, 1));
+                "How thick the box and corner lines are, in pixels.", 1, 1, 4, 1));
+        skeletonThickness = addSetting(ModuleSetting.integerSetting("skeleton-thickness",
+                "Skeleton thickness",
+                "How thick each limb of the skeleton is, in pixels. This is separate from the "
+                        + "box thickness so a skeleton can be thick without a fat box.", 2, 1, 10, 1));
         cornerLength = addSetting(ModuleSetting.integerSetting("corner-length", "Corner length",
                 "For the corners style, how long each corner arm is, in pixels.", 6, 1, 30, 1));
         boxAlpha = addSetting(ModuleSetting.integerSetting("alpha", "Box alpha",
@@ -142,7 +149,7 @@ public final class PlayerEspModule extends Module implements EspProjection.Setti
             int argb = (isPlayer ? playerColor : mobColor).colorValue() | 0xFF000000;
             String label = EspProjection.label(client, entity,
                     showName.value(), showDistance.value());
-            EspMarker marker = EspProjection.project(frame, entity, argb, label);
+            EspMarker marker = EspProjection.project(frame, entity, argb, label, wantsSkeleton());
             if (marker != null) {
                 markers.add(marker);
             }
@@ -155,6 +162,17 @@ public final class PlayerEspModule extends Module implements EspProjection.Setti
     @Override
     public String style() {
         return boxStyle.value();
+    }
+
+    @Override
+    public int skeletonThickness() {
+        return skeletonThickness.value();
+    }
+
+    /** True when the body joints are needed, so they are not projected for other styles. */
+    private boolean wantsSkeleton() {
+        String style = boxStyle.value();
+        return "skeleton".equals(style) || "both".equals(style);
     }
 
     @Override

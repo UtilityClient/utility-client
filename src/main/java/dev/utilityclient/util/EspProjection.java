@@ -126,6 +126,17 @@ public final class EspProjection {
      * what you want: a marker for someone behind you is not information you can act on.
      */
     public static EspMarker project(Frame frame, Entity entity, int argb, String label) {
+        return project(frame, entity, argb, label, false);
+    }
+
+    /**
+     * Projects an entity's bounding box and returns its screen bounds.
+     *
+     * @param skeletonRequested whether the skeleton style is in use, which is the only time
+     *                          the body joints are worth projecting at all
+     */
+    public static EspMarker project(Frame frame, Entity entity, int argb, String label,
+                                    boolean skeletonRequested) {
         if (frame == null) {
             return null;
         }
@@ -166,7 +177,67 @@ public final class EspProjection {
             return null;
         }
 
-        return new EspMarker(minX, minY, maxX, maxY, argb, label, true, entity);
+        // The skeleton joints are attached only when that style is actually in use, so the
+        // extra eight projections are not paid for by the box styles.
+        EspMarker.Skeleton skeleton = null;
+        if (skeletonRequested) {
+            skeleton = projectSkeleton(frame, entity);
+            if (skeleton == null) {
+                return null;
+            }
+        }
+
+        return new EspMarker(minX, minY, maxX, maxY, argb, label, true, entity, skeleton);
+    }
+
+    /**
+     * Projects the body joints used by the skeleton style, or null when they cannot be drawn.
+     *
+     * <p>Proportions follow the standard player model rather than being invented: a head at
+     * the top, shoulders at about 82 percent of the height, hips at 45 percent, and the arms
+     * hanging to just above the hips. Using the entity's own height and width means a mob
+     * that is not a player still gets a believable figure instead of a stretched one.
+     *
+     * <p>If any single joint is behind the camera the whole skeleton is dropped. A stick
+     * figure with one missing arm looks like a bug, so it is all or nothing, which is the same
+     * rule the box follows.
+     */
+    public static EspMarker.Skeleton projectSkeleton(Frame frame, Entity entity) {
+        if (frame == null) {
+            return null;
+        }
+        double x = entity.getX();
+        double y = entity.getY();
+        double z = entity.getZ();
+        double width = entity.getBbWidth();
+        double height = entity.getBbHeight();
+
+        double shoulderY = y + height * 0.82;
+        double hipY = y + height * 0.45;
+        double handY = y + height * 0.50;
+        double halfWidth = width / 2.0;
+        // Legs sit inboard of the shoulders, which is what makes the figure read as a person
+        // rather than a ladder.
+        double legOffset = width * 0.22;
+
+        int[] headTop = frame.toScreen(x, y + height, z);
+        int[] neck = frame.toScreen(x, shoulderY, z);
+        int[] shoulderLeft = frame.toScreen(x - halfWidth, shoulderY, z);
+        int[] shoulderRight = frame.toScreen(x + halfWidth, shoulderY, z);
+        int[] handLeft = frame.toScreen(x - halfWidth, handY, z);
+        int[] handRight = frame.toScreen(x + halfWidth, handY, z);
+        int[] hipLeft = frame.toScreen(x - legOffset, hipY, z);
+        int[] hipRight = frame.toScreen(x + legOffset, hipY, z);
+        int[] footLeft = frame.toScreen(x - legOffset, y, z);
+        int[] footRight = frame.toScreen(x + legOffset, y, z);
+
+        if (headTop == null || neck == null || shoulderLeft == null || shoulderRight == null
+                || handLeft == null || handRight == null || hipLeft == null || hipRight == null
+                || footLeft == null || footRight == null) {
+            return null;
+        }
+        return new EspMarker.Skeleton(headTop, neck, shoulderLeft, shoulderRight,
+                handLeft, handRight, hipLeft, hipRight, footLeft, footRight);
     }
 
     /** True when the player can see this entity, used to colour visible and hidden separately. */
@@ -247,8 +318,17 @@ public final class EspProjection {
                         (fill << 24) | (marker.argb & 0x00FFFFFF));
             }
 
+            boolean skeleton = "skeleton".equals(style) || "both".equals(style);
             boolean corners = "corners".equals(style) || "both".equals(style);
             boolean outline = "box".equals(style) || "both".equals(style);
+
+            if (skeleton) {
+                // "both" means the skeleton over a box, and either half on its own means the
+                // other half is not drawn, which is why the joints are requested up front.
+                if (marker.skeleton != null) {
+                    drawSkeleton(graphics, marker.skeleton, settings.skeletonThickness(), marker.argb);
+                }
+            }
             if (outline) {
                 strokeRect(graphics, marker.minX, marker.minY, width, height, thickness, marker.argb);
             }
@@ -287,6 +367,69 @@ public final class EspProjection {
         int fillAlpha();
 
         boolean tracers();
+
+        /** Line thickness for the skeleton style, separate from the box outline thickness. */
+        int skeletonThickness();
+    }
+
+    /**
+     * Draws the stick figure: a spine, a head, two arms, two legs, and the bars that join the
+     * shoulders and the hips.
+     *
+     * <p>Every limb is drawn as a thick line rather than a single row of pixels, because at
+     * one pixel the figure disappears against most backgrounds, which is the whole point of
+     * having a thickness setting.
+     */
+    private static void drawSkeleton(GuiGraphicsExtractor graphics, EspMarker.Skeleton skeleton,
+                                     int thickness, int color) {
+        int t = Math.max(1, thickness);
+
+        // Spine, from the neck up to the top of the head.
+        thickLine(graphics, skeleton.neck, skeleton.headTop, t, color);
+        // Shoulder bar.
+        thickLine(graphics, skeleton.shoulderLeft, skeleton.shoulderRight, t, color);
+        // Arms, hanging from the shoulders.
+        thickLine(graphics, skeleton.shoulderLeft, skeleton.handLeft, t, color);
+        thickLine(graphics, skeleton.shoulderRight, skeleton.handRight, t, color);
+        // Hip bar, and the legs down to the feet.
+        thickLine(graphics, skeleton.hipLeft, skeleton.hipRight, t, color);
+        thickLine(graphics, skeleton.shoulderLeft, skeleton.hipLeft, t, color);
+        thickLine(graphics, skeleton.shoulderRight, skeleton.hipRight, t, color);
+        thickLine(graphics, skeleton.hipLeft, skeleton.footLeft, t, color);
+        thickLine(graphics, skeleton.hipRight, skeleton.footRight, t, color);
+
+        // A small box on the head, which is what makes the figure read as a person rather
+        // than a coat hanger.
+        int hx = Math.min(skeleton.headTop[0], skeleton.neck[0]);
+        int hw = Math.abs(skeleton.headTop[0] - skeleton.neck[0]) + 1;
+        int hy = Math.min(skeleton.headTop[1], skeleton.neck[1]);
+        int hh = Math.abs(skeleton.headTop[1] - skeleton.neck[1]) + 1;
+        if (hw > 0 && hh > 0) {
+            for (int i = 0; i < t; i++) {
+                graphics.fill(hx - i, hy - i, hx + hw + i, hy - i + 1, color);
+                graphics.fill(hx - i, hy + hh + i - 1, hx + hw + i, hy + hh + i, color);
+                graphics.fill(hx - i, hy - i, hx - i + 1, hy + hh + i, color);
+                graphics.fill(hx + hw + i - 1, hy - i, hx + hw + i, hy + hh + i, color);
+            }
+        }
+    }
+
+    /** A straight line of the given thickness between two projected points. */
+    private static void thickLine(GuiGraphicsExtractor graphics, int[] from, int[] to,
+                                  int thickness, int color) {
+        if (from == null || to == null) {
+            return;
+        }
+        int steps = Math.min(2000, Math.max(Math.abs(to[0] - from[0]), Math.abs(to[1] - from[1])));
+        if (steps <= 0) {
+            return;
+        }
+        int half = thickness / 2;
+        for (int i = 0; i <= steps; i++) {
+            int x = from[0] + (to[0] - from[0]) * i / steps;
+            int y = from[1] + (to[1] - from[1]) * i / steps;
+            graphics.fill(x - half, y - half, x - half + thickness, y - half + thickness, color);
+        }
     }
 
     private static void strokeRect(GuiGraphicsExtractor graphics, int x, int y, int width, int height,
