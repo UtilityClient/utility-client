@@ -178,7 +178,7 @@ public final class EspProjection {
         }
 
         // The skeleton joints are attached only when that style is actually in use, so the
-        // extra eight projections are not paid for by the box styles.
+        // extra projections are not paid for by the box styles.
         EspMarker.Skeleton skeleton = null;
         if (skeletonRequested) {
             skeleton = projectSkeleton(frame, entity);
@@ -187,7 +187,39 @@ public final class EspProjection {
             }
         }
 
-        return new EspMarker(minX, minY, maxX, maxY, argb, label, true, entity, skeleton);
+        // The eight corners are kept so the 3D box can draw twelve real edges between them.
+        // A flat rectangle from the min and max has no depth and does not read as a box.
+        int[][] corners = new int[][]{p0, p1, p2, p3, p4, p5, p6, p7};
+
+        return new EspMarker(minX, minY, maxX, maxY, argb, label, true, entity, skeleton, corners);
+    }
+
+    /**
+     * The twelve edges of a box, as pairs of corner indices.
+     *
+     * <p>Corners are ordered top face 0,1,2,3 then bottom face 4,5,6,7, with 0 and 4 on the
+     * left and 2 and 6 on the right. Twelve edges is the whole of a cube's wireframe: four
+     * across the top, four across the bottom, and four joining them. Drawing only the near
+     * face is the thing that makes a wireframe look flat, so the far face is included.
+     */
+    private static final int[][] BOX_EDGES = {
+            // top face
+            {0, 1}, {1, 2}, {2, 3}, {3, 0},
+            // bottom face
+            {4, 5}, {5, 6}, {6, 7}, {7, 4},
+            // verticals joining the two faces
+            {0, 4}, {1, 5}, {2, 6}, {3, 7}
+    };
+
+    /** Draws the twelve edge wireframe, which is what a 3D box ESP actually looks like. */
+    private static void drawWireBox(GuiGraphicsExtractor graphics, int[][] corners,
+                                    int thickness, int color) {
+        if (corners == null || corners.length != 8) {
+            return;
+        }
+        for (int[] edge : BOX_EDGES) {
+            thickLine(graphics, corners[edge[0]], corners[edge[1]], thickness, color);
+        }
     }
 
     /**
@@ -323,17 +355,20 @@ public final class EspProjection {
             }
 
             boolean skeleton = "skeleton".equals(style) || "both".equals(style);
-            boolean corners = "corners".equals(style) || "both".equals(style);
-            boolean outline = "box".equals(style) || "both".equals(style);
+            boolean corners = "corners".equals(style);
+            boolean wire = "3d box".equals(style) || "box".equals(style) || "both".equals(style);
+            boolean flat = "flat".equals(style);
 
-            if (skeleton) {
-                // "both" means the skeleton over a box, and either half on its own means the
-                // other half is not drawn, which is why the joints are requested up front.
-                if (marker.skeleton != null) {
-                    drawSkeleton(graphics, marker.skeleton, settings.skeletonThickness(), marker.argb);
-                }
+            if (skeleton && marker.skeleton != null) {
+                drawSkeleton(graphics, marker.skeleton, settings.skeletonThickness(), marker.argb);
             }
-            if (outline) {
+            if (wire) {
+                // The twelve edge wireframe, which is the shape a 3D box ESP is meant to show.
+                drawWireBox(graphics, marker.corners, thickness, marker.argb);
+            }
+            if (flat) {
+                // A plain screen space rectangle. Kept because it is genuinely clearer than
+                // a wireframe at long range, where the box edges converge to a line.
                 strokeRect(graphics, marker.minX, marker.minY, width, height, thickness, marker.argb);
             }
             if (corners) {

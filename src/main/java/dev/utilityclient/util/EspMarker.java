@@ -19,16 +19,25 @@ public final class EspMarker {
     /** True when the player could already be seen, so the colour can differ from a wall one. */
     public final boolean visible;
     public final Entity entity;
-    /** The body joints used by the skeleton style, or null when the box style is in use. */
+    /** The body joints used by the skeleton style, or null when it is not in use. */
     public final Skeleton skeleton;
+    /**
+     * The eight projected corners of the bounding box, for the 3D box style.
+     *
+     * <p>These are what make a wireframe box look like a box. A flat rectangle drawn from the
+     * bounding min and max has no depth, so all you get is a 2D outline; the twelve edges
+     * between these eight points are what show the shape in three dimensions, including the
+     * far side of the player.
+     */
+    public final int[][] corners;
 
     public EspMarker(int minX, int minY, int maxX, int maxY, int argb, String label,
                      boolean visible, Entity entity) {
-        this(minX, minY, maxX, maxY, argb, label, visible, entity, null);
+        this(minX, minY, maxX, maxY, argb, label, visible, entity, null, null);
     }
 
     public EspMarker(int minX, int minY, int maxX, int maxY, int argb, String label,
-                     boolean visible, Entity entity, Skeleton skeleton) {
+                     boolean visible, Entity entity, Skeleton skeleton, int[][] corners) {
         this.minX = minX;
         this.minY = minY;
         this.maxX = maxX;
@@ -38,6 +47,7 @@ public final class EspMarker {
         this.visible = visible;
         this.entity = entity;
         this.skeleton = skeleton;
+        this.corners = corners;
     }
 
     public int width() {

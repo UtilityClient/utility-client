@@ -56,11 +56,11 @@ public final class TargetEspModule extends Module implements EspProjection.Setti
                 ModuleCategory.VISUAL, false, true, false);
 
         boxStyle = addSetting(ModuleSetting.modeSetting("box-style", "Style",
-                "How the marker is drawn around the target. Skeleton draws a stick figure, "
-                        + "Both draws the skeleton and the box together.",
-                "Corners", "Corners", "Box", "Skeleton", "Both"));
+                "3D Box draws the twelve edge wireframe, which is the classic ESP look. "
+                        + "Skeleton draws a stick figure. Both draws them together.",
+                "3D Box", "3D Box", "Box", "Flat", "Corners", "Skeleton", "Both"));
         lineThickness = addSetting(ModuleSetting.integerSetting("thickness", "Line thickness",
-                "How thick the box and corner lines are, in pixels.", 2, 1, 4, 1));
+                "How thick the box edges and corner lines are, in pixels.", 1, 1, 6, 1));
         skeletonThickness = addSetting(ModuleSetting.integerSetting("skeleton-thickness",
                 "Skeleton thickness",
                 "How thick each limb of the skeleton is, in pixels. This is separate from the "
