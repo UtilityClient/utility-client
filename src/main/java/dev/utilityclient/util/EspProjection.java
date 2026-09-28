@@ -3,12 +3,15 @@ package dev.utilityclient.util;
 import dev.utilityclient.module.impl.PlayerEspModule;
 import dev.utilityclient.module.impl.TargetEspModule;
 import dev.utilityclient.module.ModuleSetting;
+import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.phys.Vec3;
+import org.joml.Matrix4f;
+import org.joml.Vector4f;
 
 import java.util.List;
 import java.util.Locale;
@@ -29,16 +32,101 @@ public final class EspProjection {
     }
 
     /**
+     * The per frame camera state needed to project anything, captured once.
+     *
+     * <p>Built a single time per render pass rather than per entity, because rebuilding the
+     * view rotation projection matrix for every player on the server is exactly the sort of
+     * cost that turns a visual aid into a frame rate problem.
+     */
+    public static final class Frame {
+        private final Matrix4f matrix;
+        private final double cameraX;
+        private final double cameraY;
+        private final double cameraZ;
+        private final int screenWidth;
+        private final int screenHeight;
+        private final Vector4f scratch = new Vector4f();
+
+        private Frame(Matrix4f matrix, Vec3 camera, int screenWidth, int screenHeight) {
+            this.matrix = matrix;
+            this.cameraX = camera.x;
+            this.cameraY = camera.y;
+            this.cameraZ = camera.z;
+            this.screenWidth = screenWidth;
+            this.screenHeight = screenHeight;
+        }
+
+        /**
+         * Captures the current camera. Returns null when the client is not ready to be
+         * projected from, which is the case before the first frame is rendered.
+         */
+        public static Frame capture(Minecraft client) {
+            if (client == null || client.gameRenderer == null || client.getWindow() == null) {
+                return null;
+            }
+            try {
+                Camera camera = client.gameRenderer.mainCamera();
+                if (camera == null) {
+                    return null;
+                }
+                Matrix4f matrix = new Matrix4f();
+                camera.getViewRotationProjectionMatrix(matrix);
+                return new Frame(matrix, camera.position(),
+                        client.getWindow().getGuiScaledWidth(),
+                        client.getWindow().getGuiScaledHeight());
+            } catch (RuntimeException exception) {
+                return null;
+            }
+        }
+
+        /**
+         * Projects one world point to GUI pixels, or null when it cannot be drawn.
+         *
+         * <p>The matrix is applied by hand rather than through the game's
+         * {@code projectPointToScreen}, because that method returns normalised device
+         * coordinates, which run from minus one to one. Treating those as pixels collapses
+         * every marker into the top left corner, which is the bug this replaced. Scaling to
+         * the screen here also means the result is correct at any GUI scale, which is
+         * something the normalised form has no knowledge of.
+         *
+         * <p>The clip space w is checked before dividing. A point behind the camera has a
+         * negative w, and dividing by it mirrors the point to a plausible looking position on
+         * the opposite side of the screen, so a player standing behind you would otherwise
+         * appear in front of you.
+         */
+        public int[] toScreen(double x, double y, double z) {
+            scratch.set((float) (x - cameraX), (float) (y - cameraY), (float) (z - cameraZ), 1.0F);
+            matrix.transform(scratch);
+
+            if (scratch.w <= 0.0001F) {
+                return null;
+            }
+            float ndcX = scratch.x / scratch.w;
+            float ndcY = scratch.y / scratch.w;
+            float ndcZ = scratch.z / scratch.w;
+
+            // Outside the depth range means beyond the far plane or clipped away entirely.
+            if (ndcZ < -1.0F || ndcZ > 1.0F) {
+                return null;
+            }
+
+            int screenX = (int) ((ndcX * 0.5F + 0.5F) * screenWidth);
+            // NDC has y pointing up, the screen has it pointing down, hence the flip.
+            int screenY = (int) ((1.0F - (ndcY * 0.5F + 0.5F)) * screenHeight);
+            return new int[]{screenX, screenY};
+        }
+    }
+
+    /**
      * Projects an entity's bounding box and returns its screen bounds, or null when it cannot
      * be drawn at all.
      *
      * <p>Any one corner failing means the box would be nonsense, so the whole entity is
-     * skipped rather than drawn wrong. That also naturally drops entities behind the camera,
-     * whose projection mirrors to a plausible looking point on the opposite side of the
-     * screen instead of failing loudly.
+     * skipped rather than drawn wrong. That also drops entities behind the camera, which is
+     * what you want: a marker for someone behind you is not information you can act on.
      */
-    public static EspMarker project(Minecraft client, Entity entity, int argb, String label) {
-        if (client.gameRenderer == null) {
+    public static EspMarker project(Frame frame, Entity entity, int argb, String label) {
+        if (frame == null) {
             return null;
         }
 
@@ -49,50 +137,36 @@ public final class EspProjection {
         double bottom = entity.getY();
         double top = entity.getY() + entity.getBbHeight();
 
-        Vec3 p0 = project(client, left, top, back);
-        Vec3 p1 = project(client, right, top, back);
-        Vec3 p2 = project(client, right, top, front);
-        Vec3 p3 = project(client, left, top, front);
-        Vec3 p4 = project(client, left, bottom, back);
-        Vec3 p5 = project(client, right, bottom, back);
-        Vec3 p6 = project(client, right, bottom, front);
-        Vec3 p7 = project(client, left, bottom, front);
+        int[] p0 = frame.toScreen(left, top, back);
+        int[] p1 = frame.toScreen(right, top, back);
+        int[] p2 = frame.toScreen(right, top, front);
+        int[] p3 = frame.toScreen(left, top, front);
+        int[] p4 = frame.toScreen(left, bottom, back);
+        int[] p5 = frame.toScreen(right, bottom, back);
+        int[] p6 = frame.toScreen(right, bottom, front);
+        int[] p7 = frame.toScreen(left, bottom, front);
         if (p0 == null || p1 == null || p2 == null || p3 == null
                 || p4 == null || p5 == null || p6 == null || p7 == null) {
             return null;
         }
 
-        int minX = (int) Math.round(minOf(p0.x, p1.x, p2.x, p3.x, p4.x, p5.x, p6.x, p7.x));
-        int maxX = (int) Math.round(maxOf(p0.x, p1.x, p2.x, p3.x, p4.x, p5.x, p6.x, p7.x));
-        int minY = (int) Math.round(minOf(p0.y, p1.y, p2.y, p3.y, p4.y, p5.y, p6.y, p7.y));
-        int maxY = (int) Math.round(maxOf(p0.y, p1.y, p2.y, p3.y, p4.y, p5.y, p6.y, p7.y));
+        int minX = minOf(p0[0], p1[0], p2[0], p3[0], p4[0], p5[0], p6[0], p7[0]);
+        int maxX = maxOf(p0[0], p1[0], p2[0], p3[0], p4[0], p5[0], p6[0], p7[0]);
+        int minY = minOf(p0[1], p1[1], p2[1], p3[1], p4[1], p5[1], p6[1], p7[1]);
+        int maxY = maxOf(p0[1], p1[1], p2[1], p3[1], p4[1], p5[1], p6[1], p7[1]);
+
+        if (maxX <= minX || maxY <= minY) {
+            return null;
+        }
 
         // An entity far off screen still projects, often to absurd coordinates, so the box is
         // rejected rather than clamped. Clamping would paint a huge box across the display for
         // a player a few kilometres away, which looks broken and hides the real markers.
-        int screenW = client.getWindow().getGuiScaledWidth();
-        int screenH = client.getWindow().getGuiScaledHeight();
-        if (maxX < 0 || minX > screenW || maxY < 0 || minY > screenH) {
-            return null;
-        }
-        if (maxX - minX <= 0 || maxY - minY <= 0) {
+        if (maxX < 0 || minX > frame.screenWidth || maxY < 0 || minY > frame.screenHeight) {
             return null;
         }
 
         return new EspMarker(minX, minY, maxX, maxY, argb, label, true, entity);
-    }
-
-    /** Projects one world point, or null when it is behind the camera or otherwise unusable. */
-    private static Vec3 project(Minecraft client, double x, double y, double z) {
-        Vec3 result;
-        try {
-            result = client.gameRenderer.projectPointToScreen(new Vec3(x, y, z));
-        } catch (RuntimeException exception) {
-            return null;
-        }
-        // The near plane sits at zero, so anything at or behind it is not drawable. Without
-        // this check a player behind you appears mirrored on the far side of the screen.
-        return result == null || result.z <= 0.0D ? null : result;
     }
 
     /** True when the player can see this entity, used to colour visible and hidden separately. */
@@ -128,17 +202,17 @@ public final class EspProjection {
         return entity.getName().getString().toLowerCase(Locale.ROOT);
     }
 
-    private static double minOf(double... values) {
-        double best = Double.MAX_VALUE;
-        for (double value : values) {
+    private static int minOf(int... values) {
+        int best = Integer.MAX_VALUE;
+        for (int value : values) {
             best = Math.min(best, value);
         }
         return best;
     }
 
-    private static double maxOf(double... values) {
-        double best = -Double.MAX_VALUE;
-        for (double value : values) {
+    private static int maxOf(int... values) {
+        int best = Integer.MIN_VALUE;
+        for (int value : values) {
             best = Math.max(best, value);
         }
         return best;

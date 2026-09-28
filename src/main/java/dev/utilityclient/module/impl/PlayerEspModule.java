@@ -110,6 +110,12 @@ public final class PlayerEspModule extends Module implements EspProjection.Setti
         if (client.player == null || client.level == null) {
             return markers;
         }
+        // Captured once for the whole pass, not per entity. Rebuilding the camera matrix for
+        // every player on the server is the kind of cost that costs frames.
+        EspProjection.Frame frame = EspProjection.Frame.capture(client);
+        if (frame == null) {
+            return markers;
+        }
 
         for (Entity entity : client.level.entitiesForRendering()) {
             if (entity == client.player) {
@@ -136,7 +142,7 @@ public final class PlayerEspModule extends Module implements EspProjection.Setti
             int argb = (isPlayer ? playerColor : mobColor).colorValue() | 0xFF000000;
             String label = EspProjection.label(client, entity,
                     showName.value(), showDistance.value());
-            EspMarker marker = EspProjection.project(client, entity, argb, label);
+            EspMarker marker = EspProjection.project(frame, entity, argb, label);
             if (marker != null) {
                 markers.add(marker);
             }

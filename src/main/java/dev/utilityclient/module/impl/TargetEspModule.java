@@ -112,6 +112,11 @@ public final class TargetEspModule extends Module implements EspProjection.Setti
             return markers;
         }
 
+        EspProjection.Frame frame = EspProjection.Frame.capture(client);
+        if (frame == null) {
+            return markers;
+        }
+
         boolean visible = EspProjection.visibleTo(client, target);
         if (!visible && !showThroughWalls.value()) {
             return markers;
@@ -123,7 +128,7 @@ public final class TargetEspModule extends Module implements EspProjection.Setti
         int argb = color.colorValue() | 0xFF000000;
         String label = EspProjection.label(client, target,
                 showName.value(), showDistance.value());
-        EspMarker marker = EspProjection.project(client, target, argb, label);
+        EspMarker marker = EspProjection.project(frame, target, argb, label);
         if (marker != null) {
             markers.add(marker);
         }
