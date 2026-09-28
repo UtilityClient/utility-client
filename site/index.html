@@ -42,7 +42,7 @@
         <a class="btn btn-ghost" href="#modules" data-edit="hero.cta2" data-label="Hero button 2">Browse modules</a>
       </div>
       <dl class="facts" data-repeat="fact">
-        <div><dt data-edit="facts.0.v" data-label="Stat 1 value">20</dt><dd data-edit="facts.0.l" data-label="Stat 1 label">modules</dd></div>
+        <div><dt data-edit="facts.0.v" data-label="Stat 1 value">21</dt><dd data-edit="facts.0.l" data-label="Stat 1 label">modules</dd></div>
         <div><dt data-edit="facts.1.v" data-label="Stat 2 value">1 key</dt><dd data-edit="facts.1.l" data-label="Stat 2 label">opens the menu</dd></div>
         <div><dt data-edit="facts.2.v" data-label="Stat 3 value">0</dt><dd data-edit="facts.2.l" data-label="Stat 3 label">server side changes</dd></div>
         <div><dt data-edit="facts.3.v" data-label="Stat 4 value">JSON</dt><dd data-edit="facts.3.l" data-label="Stat 4 label">config file</dd></div>
@@ -92,13 +92,13 @@
   <section id="modules" class="section section-alt">
     <div class="section-head">
       <h2 data-edit="modules.heading" data-label="Modules heading">Modules</h2>
-      <p data-edit="modules.sub" data-label="Modules subheading">All twenty, grouped by where they live in the menu.</p>
+      <p data-edit="modules.sub" data-label="Modules subheading">All twenty one, grouped by where they live in the menu.</p>
     </div>
 
     <p class="note-bar" data-edit="modules.note" data-label="Modules note">
-      <strong>Combat is deliberately empty.</strong> This client has no combat automation, so
-      that category exists in the menu for layout reasons and contains nothing. Every other
-      category is populated.
+      <strong>No combat automation.</strong> The Combat category holds convenience switches like
+      Mace Swap, which only change which hotbar slot you are holding. Nothing here aims, times or
+      lands a hit for you, and there is no combat macro of any kind.
     </p>
 
     <div class="filter-bar">
@@ -115,6 +115,16 @@
 
     <div class="grid grid-2" id="moduleGrid" data-repeat="module">
 
+      <article class="card module" data-cat="COMBAT" data-name="mace swap">
+        <div class="module-top"><h3 data-edit="modules.mace swap.name" data-label="mace swap name">Mace Swap</h3><span class="tag" data-edit="modules.mace swap.tag" data-label="mace swap tag">Combat</span></div>
+        <p data-edit="modules.mace swap.desc" data-label="mace swap description">Clicking it in the menu puts a mace in your hand. No keybind.</p>
+        <ul class="module-list">
+          <li data-edit="modules.mace swap.b0" data-label="mace swap bullet 1">Picks the mace carrying Wind Burst, Density or Breach</li>
+          <li data-edit="modules.mace swap.b1" data-label="mace swap bullet 2">Chooses the highest level of the enchantment you asked for</li>
+          <li data-edit="modules.mace swap.b2" data-label="mace swap bullet 2b">Only changes which hotbar slot is held, never moves items</li>
+          <li data-edit="modules.mace swap.b3" data-label="mace swap bullet 4">Leaves your hand alone if the mace is already out</li>
+        </ul>
+      </article>
       <article class="card module" data-cat="MISC" data-name="hud">
         <div class="module-top"><h3 data-edit="modules.hud.name" data-label="hud name">HUD</h3><span class="tag on" data-edit="modules.hud.tag" data-label="hud tag">on by default</span></div>
         <p data-edit="modules.hud.desc" data-label="hud description">FPS, coordinates, facing and session time on one movable panel.</p>
