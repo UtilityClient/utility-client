@@ -821,24 +821,12 @@ public final class ModuleSettingsScreen extends Screen {
     }
 
     private void roundRect(GuiGraphicsExtractor graphics, int x, int y, int width, int height, int radius, int color) {
-        int r = Math.max(0, Math.min(radius, Math.min(width, height) / 2));
-        if (r == 0) {
-            graphics.fill(x, y, x + width, y + height, color);
-            return;
-        }
-        graphics.fill(x + r, y, x + width - r, y + height, color);
-        graphics.fill(x, y + r, x + width, y + height - r, color);
-        for (int i = 0; i < r; i++) {
-            int inset = r - i;
-            graphics.fill(x + inset, y + i, x + width - inset, y + i + 1, color);
-            graphics.fill(x + inset, y + height - 1 - i, x + width - inset, y + height - i, color);
-        }
+        GuiShapes.roundRect(graphics, x, y, width, height, radius, color);
     }
 
     private void roundPanel(GuiGraphicsExtractor graphics, int x, int y, int width, int height,
                             int radius, int fill, int border) {
-        roundRect(graphics, x, y, width, height, radius, border);
-        roundRect(graphics, x + 1, y + 1, width - 2, height - 2, Math.max(1, radius - 1), fill);
+        GuiShapes.roundPanel(graphics, x, y, width, height, radius, fill, border);
     }
 
     private record ColorPicker(int squareX, int squareY, int squareSize, int hueX, int hueY, int hueWidth) {

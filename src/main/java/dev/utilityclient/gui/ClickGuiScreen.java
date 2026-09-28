@@ -79,9 +79,9 @@ public final class ClickGuiScreen extends Screen {
 
     private void drawWindow(GuiGraphicsExtractor graphics, int accent) {
         roundPanel(graphics, layout.windowX, layout.windowY, layout.windowWidth, layout.windowHeight,
-                16, WINDOW, BORDER);
+                20, WINDOW, BORDER);
         roundRect(graphics, layout.windowX + 1, layout.windowY + 1, layout.sidebarWidth - 2,
-                layout.windowHeight - 2, 15, SIDEBAR);
+                layout.windowHeight - 2, 19, SIDEBAR);
         // Divider between the sidebar and the content area.
         graphics.fill(layout.windowX + layout.sidebarWidth - 1, layout.windowY + 18,
                 layout.windowX + layout.sidebarWidth, layout.windowY + layout.windowHeight - 18, DIVIDER);
@@ -133,10 +133,10 @@ public final class ClickGuiScreen extends Screen {
                              String label, boolean selected, int count, int mouseX, int mouseY, int accent) {
         boolean hovered = inside(mouseX, mouseY, x, y, rowWidth, 28);
         if (selected) {
-            roundRect(graphics, x, y, rowWidth, 28, 7, Theme.accentSoft());
+            roundRect(graphics, x, y, rowWidth, 28, 10, Theme.accentSoft());
             graphics.fill(x, y + 5, x + 3, y + 23, accent);
         } else if (hovered) {
-            roundRect(graphics, x, y, rowWidth, 28, 7, 0xFF1A1A22);
+            roundRect(graphics, x, y, rowWidth, 28, 10, 0xFF1A1A22);
         }
         int iconColor = selected ? accent : (hovered ? TEXT : MUTED);
         drawIcon(graphics, icon, x + 17, y + 14, iconColor);
@@ -225,7 +225,7 @@ public final class ClickGuiScreen extends Screen {
         }
         int fill = on ? CARD_ON : (hovered ? CARD_HOVER : CARD_OFF);
         int border = on ? accent : (hovered ? BORDER : BORDER_SOFT);
-        roundPanel(graphics, card.x, card.y, card.width, card.height, 10, fill, border);
+        roundPanel(graphics, card.x, card.y, card.width, card.height, 14, fill, border);
 
         graphics.text(font, card.module.displayName(), card.x + 13, card.y + 12, TEXT, false);
 
@@ -252,7 +252,7 @@ public final class ClickGuiScreen extends Screen {
     }
 
     private void drawToggle(GuiGraphicsExtractor graphics, int x, int y, boolean on, int accent) {
-        roundRect(graphics, x, y, 40, 19, 9, on ? accent : TRACK);
+        roundRect(graphics, x, y, 40, 19, 12, on ? accent : TRACK);
         int knob = on ? x + 23 : x + 3;
         if (on) {
             roundRect(graphics, knob - 2, y - 2, 20, 23, 11, 0x33000000);
@@ -299,11 +299,11 @@ public final class ClickGuiScreen extends Screen {
         int y = layout.windowY + layout.windowHeight - 60;
         int w = layout.sidebarWidth - 36;
         boolean hovered = inside(mouseX, mouseY, x, y, w, 44);
-        roundPanel(graphics, x, y, w, 44, 10, hovered ? 0xFF1E1E28 : 0xFF18181F, BORDER);
+        roundPanel(graphics, x, y, w, 44, 13, hovered ? 0xFF1E1E28 : 0xFF18181F, BORDER);
 
         LicenseManager.Status status = LicenseManager.status();
         String initial = playerName().isEmpty() ? "?" : playerName().substring(0, 1).toUpperCase(Locale.ROOT);
-        roundRect(graphics, x + 10, y + 9, 26, 26, 8, status.valid() ? 0xFF2B7A4B : 0xFF3A3A48);
+        roundRect(graphics, x + 10, y + 9, 26, 26, 11, status.valid() ? 0xFF2B7A4B : 0xFF3A3A48);
         graphics.text(font, initial, x + 10 + (26 - font.width(initial)) / 2, y + 18, TEXT, false);
 
         graphics.text(font, playerName(), x + 44, y + 10, TEXT, false);
@@ -651,76 +651,23 @@ public final class ClickGuiScreen extends Screen {
     }
 
     private void roundRect(GuiGraphicsExtractor graphics, int x, int y, int w, int h, int radius, int color) {
-        int r = Math.max(0, Math.min(radius, Math.min(w, h) / 2));
-        if (r == 0 || color == 0x00000000) {
-            if (w > 0 && h > 0) {
-                graphics.fill(x, y, x + w, y + h, color);
-            }
-            return;
-        }
-        graphics.fill(x + r, y, x + w - r, y + h, color);
-        graphics.fill(x, y + r, x + w, y + h - r, color);
-        for (int i = 0; i < r; i++) {
-            int inset = r - i;
-            graphics.fill(x + inset, y + i, x + w - inset, y + i + 1, color);
-            graphics.fill(x + inset, y + h - 1 - i, x + w - inset, y + h - i, color);
-        }
+        GuiShapes.roundRect(graphics, x, y, w, h, radius, color);
     }
 
     private void roundPanel(GuiGraphicsExtractor graphics, int x, int y, int w, int h,
                             int radius, int fill, int border) {
-        roundRect(graphics, x, y, w, h, radius, border);
-        roundRect(graphics, x + 1, y + 1, w - 2, h - 2, Math.max(1, radius - 1), fill);
+        GuiShapes.roundPanel(graphics, x, y, w, h, radius, fill, border);
     }
 
-    private void fillCircle(GuiGraphicsExtractor graphics, int cx, int cy, int r, int color) {
-        for (int dy = -r; dy <= r; dy++) {
-            int half = (int) Math.round(Math.sqrt(Math.max(0.0, r * r - dy * dy)));
-            if (half <= 0 && Math.abs(dy) > r) {
-                continue;
-            }
-            graphics.fill(cx - half, cy + dy, cx + half + 1, cy + dy + 1, color);
-        }
+    private void fillCircle(GuiGraphicsExtractor graphics, int cx, int cy, int radius, int color) {
+        GuiShapes.fillCircle(graphics, cx, cy, radius, color);
     }
 
-    private void strokeCircle(GuiGraphicsExtractor graphics, int cx, int cy, int r, int thickness, int color) {
-        int outer = r;
-        int inner = Math.max(0, r - thickness);
-        for (int dy = -outer; dy <= outer; dy++) {
-            int outerHalf = (int) Math.round(Math.sqrt(Math.max(0.0, outer * outer - dy * dy)));
-            int innerHalf = Math.abs(dy) > inner ? 0
-                    : (int) Math.round(Math.sqrt(Math.max(0.0, inner * inner - dy * dy)));
-            if (outerHalf <= innerHalf) {
-                continue;
-            }
-            graphics.fill(cx - outerHalf, cy + dy, cx - innerHalf, cy + dy + 1, color);
-            graphics.fill(cx + innerHalf, cy + dy, cx + outerHalf + 1, cy + dy + 1, color);
-        }
+    private void strokeCircle(GuiGraphicsExtractor graphics, int cx, int cy, int radius, int thickness, int color) {
+        GuiShapes.strokeCircle(graphics, cx, cy, radius, thickness, color);
     }
 
     private void line(GuiGraphicsExtractor graphics, int x0, int y0, int x1, int y1, int color, int thickness) {
-        int dx = Math.abs(x1 - x0);
-        int dy = Math.abs(y1 - y0);
-        int sx = x0 < x1 ? 1 : -1;
-        int sy = y0 < y1 ? 1 : -1;
-        int err = dx - dy;
-        int half = Math.max(0, thickness / 2);
-        int x = x0;
-        int y = y0;
-        while (true) {
-            graphics.fill(x - half, y - half, x - half + thickness, y - half + thickness, color);
-            if (x == x1 && y == y1) {
-                break;
-            }
-            int e2 = 2 * err;
-            if (e2 > -dy) {
-                err -= dy;
-                x += sx;
-            }
-            if (e2 < dx) {
-                err += dx;
-                y += sy;
-            }
-        }
+        GuiShapes.line(graphics, x0, y0, x1, y1, color, thickness);
     }
 }

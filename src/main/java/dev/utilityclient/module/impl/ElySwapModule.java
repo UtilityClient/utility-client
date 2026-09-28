@@ -1,5 +1,7 @@
 package dev.utilityclient.module.impl;
 
+import dev.utilityclient.gui.ClickGuiScreen;
+import dev.utilityclient.gui.ModuleSettingsScreen;
 import dev.utilityclient.keybind.KeyBind;
 import dev.utilityclient.module.Module;
 import dev.utilityclient.module.ModuleCategory;
@@ -55,8 +57,9 @@ public final class ElySwapModule extends Module {
         if (client.player == null || client.level == null) {
             return;
         }
-        // Equipping while a menu is open would fight with whatever the player is clicking.
-        if (client.gui.screen() != null) {
+        // Equipping while a real menu is open would fight with whatever the player is
+        // clicking. Our own menus are excluded, see realMenuOpen.
+        if (realMenuOpen(client)) {
             return;
         }
 
@@ -74,6 +77,16 @@ public final class ElySwapModule extends Module {
         }
 
         swap(client);
+    }
+
+    /**
+     * True when a real game menu is open. The ClickGUI and the settings screens are not a
+     * problem, since which item you are holding does not interfere with them.
+     */
+    private static boolean realMenuOpen(Minecraft client) {
+        return client.gui.screen() != null
+                && !(client.gui.screen() instanceof ClickGuiScreen)
+                && !(client.gui.screen() instanceof ModuleSettingsScreen);
     }
 
     /* ---------------------------------------------------------------- swap */

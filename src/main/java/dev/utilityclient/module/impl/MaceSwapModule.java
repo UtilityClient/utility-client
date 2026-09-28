@@ -53,14 +53,27 @@ public final class MaceSwapModule extends Module {
         swap(Minecraft.getInstance());
     }
 
+    /**
+     * True when a real game menu is open. Our own ClickGUI and settings screens do not count,
+     * because which item you are holding does not interfere with them. That distinction is
+     * the whole reason this module works at all: onEnable is only ever reached while the
+     * ClickGUI is on screen, so a plain "any screen open" check would block every swap.
+     */
+    private static boolean realMenuOpen(Minecraft client) {
+        return client.gui.screen() != null
+                && !(client.gui.screen() instanceof dev.utilityclient.gui.ClickGuiScreen)
+                && !(client.gui.screen() instanceof dev.utilityclient.gui.ModuleSettingsScreen);
+    }
+
     /* ---------------------------------------------------------------- swap */
 
     private void swap(Minecraft client) {
         if (client.player == null || client.level == null) {
             return;
         }
-        // Equipping while a menu is open would fight with whatever the player is clicking.
-        if (client.gui.screen() != null) {
+        // Equipping while a real menu is open would fight with whatever the player is
+        // clicking. Our own menus are excluded, see realMenuOpen.
+        if (realMenuOpen(client)) {
             return;
         }
 

@@ -238,27 +238,15 @@ public final class ClientSettingsScreen extends Screen {
     }
 
     private void roundRect(GuiGraphicsExtractor graphics, int x, int y, int w, int h, int radius, int color) {
-        int r = Math.max(0, Math.min(radius, Math.min(w, h) / 2));
-        if (r == 0) {
-            graphics.fill(x, y, x + w, y + h, color);
-            return;
-        }
-        graphics.fill(x + r, y, x + w - r, y + h, color);
-        graphics.fill(x, y + r, x + w, y + h - r, color);
-        for (int i = 0; i < r; i++) {
-            int inset = r - i;
-            graphics.fill(x + inset, y + i, x + w - inset, y + i + 1, color);
-            graphics.fill(x + inset, y + h - 1 - i, x + w - inset, y + h - i, color);
-        }
+        GuiShapes.roundRect(graphics, x, y, w, h, radius, color);
     }
 
     private void panel(GuiGraphicsExtractor graphics, int x, int y, int w, int h, int radius, int fill, int border) {
-        roundRect(graphics, x, y, w, h, radius, border);
-        roundRect(graphics, x + 1, y + 1, w - 2, h - 2, Math.max(1, radius - 1), fill);
+        GuiShapes.roundPanel(graphics, x, y, w, h, radius, fill, border);
     }
 
     private void roundPanel(GuiGraphicsExtractor graphics, int x, int y, int w, int h,
                             int radius, int fill, int border) {
-        panel(graphics, x, y, w, h, radius, fill, border);
+        GuiShapes.roundPanel(graphics, x, y, w, h, radius, fill, border);
     }
 }
