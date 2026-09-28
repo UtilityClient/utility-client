@@ -48,7 +48,13 @@ public final class HotbarMemory {
         return true;
     }
 
-    /** Arms an automatic return after the given number of ticks. */
+    /**
+     * Arms an automatic return after the given number of ticks.
+     *
+     * <p>One tick is 50 milliseconds, which is the smallest gap that still lets the server
+     * process the swap before the return. Zero is not offered, because swapping and swapping
+     * straight back inside one tick means the mace is never really in hand.
+     */
     public static void returnAfter(int ticks) {
         returnIn = Math.max(1, ticks);
     }

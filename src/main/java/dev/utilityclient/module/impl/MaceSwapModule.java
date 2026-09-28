@@ -58,8 +58,8 @@ public final class MaceSwapModule extends Module {
                         + "left holding a mace. Returns only if you have not scrolled away "
                         + "yourself in the meantime.", false));
         returnDelay = addSetting(ModuleSetting.integerSetting("return-delay", "Return delay",
-                "How long to hold the mace before switching back, in ticks. 20 ticks is one "
-                        + "second.", 2, 1, 40, 1));
+                "How long to hold the mace before switching back, in ticks. 1 is 50 "
+                        + "milliseconds, 20 is one second.", 1, 1, 40, 1));
         showStatus = addSetting(ModuleSetting.booleanSetting("status", "Show status",
                 "Print a line in chat when it swaps or cannot find one.", true));
     }

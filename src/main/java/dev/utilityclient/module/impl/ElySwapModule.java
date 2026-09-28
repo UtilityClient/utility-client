@@ -6,10 +6,11 @@ import dev.utilityclient.keybind.KeyBind;
 import dev.utilityclient.module.Module;
 import dev.utilityclient.module.ModuleCategory;
 import dev.utilityclient.module.ModuleSetting;
-import dev.utilityclient.util.HotbarMemory;
-import dev.utilityclient.util.UseState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.entity.EquipmentSlot;
+import net.minecraft.world.inventory.ContainerInput;
+import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -17,51 +18,39 @@ import net.minecraft.world.item.Items;
 import java.util.List;
 
 /**
- * Puts an elytra, or a chestplate, straight into your hand.
+ * One key to swap between the elytra and the chestplate you are wearing.
  *
- * <p>Your activate key selects the item in the hotbar, and a right click puts back whatever you
- * were holding. That is the whole module: it moves the hotbar selection and nothing else, so
- * nothing is picked up, moved or consumed, and no item stack is ever written to.
+ * <p>It looks at what is actually in your chest slot and does the opposite: wearing anything
+ * other than an elytra means it puts the elytra on, wearing an elytra means it puts your best
+ * chestplate back. It works whichever way round you started, and it will not downgrade you.
  *
- * <p>Only hotbar slots are considered. Selecting an item further back would mean dragging it
- * along first, which is a different and much more intrusive thing to do, so an item that is not
- * in the hotbar is reported as not found rather than relocated.
+ * <p>The swap is a single shift click, the same thing you would do by hand, so the game takes
+ * the old armour back into your inventory as it goes on. There is no cursor involved, so there
+ * is nothing to drop if a step is interrupted, and this module never writes to an item stack.
  *
- * <p>The swap and the return are both hotbar selections, sent locally and then to the server,
- * so both sides agree on what is in hand.
+ * <p>It feels instant because the click is applied locally first and then sent, rather than
+ * waiting for the server to tell us what happened. Both halves use the game's own code, so the
+ * local result matches what the server decides and the two never disagree.
  */
 public final class ElySwapModule extends Module {
     public final ModuleSetting<KeyBind> activateKey;
     public final ModuleSetting<Boolean> useModuleKey;
-    public final ModuleSetting<String> target;
-    public final ModuleSetting<Boolean> returnOnRightClick;
-    public final ModuleSetting<Integer> returnDelay;
-    public final ModuleSetting<Boolean> skipIfHeld;
+    public final ModuleSetting<Boolean> searchInventory;
     public final ModuleSetting<Boolean> showStatus;
 
     public ElySwapModule() {
         super("ely-swap", "Ely Swap",
-                "Swaps an elytra or chestplate into your hand with one key.",
+                "Swaps between your elytra and your chestplate with one key.",
                 ModuleCategory.MOVEMENT, false, true, false);
 
         activateKey = addSetting(ModuleSetting.keybindSetting("activate-key", "Activate key",
                 "The key that swaps, while the module stays switched on.", new KeyBind()));
         useModuleKey = addSetting(ModuleSetting.booleanSetting("module-key", "Also use module key",
                 "Let the module's own on/off keybind swap as well.", true));
-        target = addSetting(ModuleSetting.modeSetting("target", "Swap to",
-                "Which item to put in your hand. Chestplate picks the best one you own, so "
-                        + "swapping back never downgrades your armour.",
-                "Elytra", "Elytra", "Chestplate"));
-        returnOnRightClick = addSetting(ModuleSetting.booleanSetting("return-on-right-click",
-                "Switch back on right click",
-                "After swapping, a right click puts your original item back in hand. The game "
-                        + "reports the right click through a mixin, so this fires even when the "
-                        + "game has already used the item.", true));
-        returnDelay = addSetting(ModuleSetting.integerSetting("return-delay", "Auto return delay",
-                "If you never right click, switch back on your own after this many ticks. Set to "
-                        + "0 to never return by itself.", 0, 0, 40, 1));
-        skipIfHeld = addSetting(ModuleSetting.booleanSetting("skip-if-held", "Skip if already held",
-                "Do nothing if the item you want is already in hand.", true));
+        searchInventory = addSetting(ModuleSetting.booleanSetting("search-inventory", "Search inventory",
+                "Look through your whole inventory for the spare piece, not just the hotbar. "
+                        + "A shift click works from anywhere, so this only changes how far it "
+                        + "has to look, never whether it works.", true));
         showStatus = addSetting(ModuleSetting.booleanSetting("status", "Show status",
                 "Print a line in chat when it swaps or cannot find one.", true));
     }
@@ -69,44 +58,27 @@ public final class ElySwapModule extends Module {
     @Override
     public void tick(Minecraft client) {
         if (client.player == null || client.level == null) {
-            HotbarMemory.forget();
-            UseState.clear();
             return;
         }
-        // Swapping the selection while a real menu is open would fight with whatever the
-        // player is clicking. Our own menus are excluded, see realMenuOpen.
+        // Equipping while a real menu is open would fight with whatever the player is
+        // clicking. Our own menus are excluded, see realMenuOpen.
         if (realMenuOpen(client)) {
-            UseState.clear();
             return;
         }
-
-        // The return is checked first, so a right click lands even if the activate key is
-        // also held this tick.
-        if (returnOnRightClick.value() && UseState.consume()) {
-            if (HotbarMemory.returnIfUnmoved(client) && showStatus.value()) {
-                say(client, "Switched back to your previous item.");
-            }
-            return;
-        }
-        UseState.clear();
-
-        if (HotbarMemory.ticksUntilReturn() > 0 && HotbarMemory.tickReturn()) {
-            if (HotbarMemory.returnIfUnmoved(client) && showStatus.value()) {
-                say(client, "Switched back to your previous item.");
-            }
-            return;
-        }
-
         if (!keyPressed(client)) {
             return;
         }
         swap(client);
     }
 
-    @Override
-    public void onDisable() {
-        HotbarMemory.forget();
-        UseState.clear();
+    /**
+     * True when a real game menu is open. The ClickGUI and the settings screens are not a
+     * problem, since what you are wearing does not interfere with them.
+     */
+    private static boolean realMenuOpen(Minecraft client) {
+        return client.gui.screen() != null
+                && !(client.gui.screen() instanceof ClickGuiScreen)
+                && !(client.gui.screen() instanceof ModuleSettingsScreen);
     }
 
     /**
@@ -128,72 +100,67 @@ public final class ElySwapModule extends Module {
         return false;
     }
 
-    /**
-     * True when a real game menu is open. The ClickGUI and the settings screens are not a
-     * problem, since which item you are holding does not interfere with them.
-     */
-    private static boolean realMenuOpen(Minecraft client) {
-        return client.gui.screen() != null
-                && !(client.gui.screen() instanceof ClickGuiScreen)
-                && !(client.gui.screen() instanceof ModuleSettingsScreen);
-    }
-
     /* ---------------------------------------------------------------- swap */
 
     private void swap(Minecraft client) {
-        boolean wantsElytra = !"Chestplate".equals(target.value());
-        int current = client.player.getInventory().getSelectedSlot();
-        int slot = wantsElytra
-                ? findSlot(client, Items.ELYTRA, List.of())
-                : findBestChestplateSlot(client);
-        String what = wantsElytra ? "elytra" : "chestplate";
+        ItemStack worn = client.player.getItemBySlot(EquipmentSlot.CHEST);
+        boolean wearingElytra = !worn.isEmpty() && worn.getItem() == Items.ELYTRA;
 
-        if (slot < 0) {
+        // Wearing an elytra means the chestplate is what you want back, and the other way
+        // round. Anything else is treated as the chest side so the elytra goes on.
+        Slot target = wearingElytra ? bestChestplate(client) : firstSlot(client, Items.ELYTRA);
+        String what = wearingElytra ? "chestplate" : "elytra";
+
+        if (target == null) {
             if (showStatus.value()) {
-                say(client, "No " + what + " in your hotbar.");
+                say(client, wearingElytra
+                        ? "No chestplate to put back on."
+                        : "No elytra in your " + (searchInventory.value() ? "inventory" : "hotbar") + ".");
             }
             return;
         }
 
-        if (slot == current && skipIfHeld.value()) {
-            return;
-        }
-
-        // A second swap while a return is pending means the player wants to stay on the
-        // item, so the old timer is dropped rather than firing against the new swap.
-        HotbarMemory.forget();
-        if (!HotbarMemory.swapTo(client, slot)) {
-            return;
-        }
-        if (returnDelay.value() > 0) {
-            HotbarMemory.returnAfter(returnDelay.value());
-        }
+        // Two halves, both the game's own code. The local click is what makes the swap feel
+        // instant, the packet is what makes the server agree. An earlier build sent only the
+        // packet, so nothing appeared to happen until the server replied, which read as the
+        // module simply being broken.
+        int slot = target.index;
+        client.player.inventoryMenu.clicked(slot, 0, ContainerInput.QUICK_MOVE, client.player);
+        client.gameMode.handleContainerInput(client.player.inventoryMenu.containerId,
+                slot, 0, ContainerInput.QUICK_MOVE, client.player);
 
         if (showStatus.value()) {
             say(client, "Swapped to " + what + ".");
         }
     }
 
-    /** First hotbar slot holding the wanted item. */
-    private static int findSlot(Minecraft client, Item wanted, List<Item> ignored) {
-        int hotbar = Math.min(9, client.player.getInventory().getContainerSize());
-        for (int slot = 0; slot < hotbar; slot++) {
-            ItemStack stack = client.player.getInventory().getItem(slot);
-            if (stack.isEmpty() || ignored.contains(stack.getItem())) {
+    /**
+     * Finds the menu slot holding the wanted item.
+     *
+     * <p>This walks the menu's own slots and uses the index the menu gives, rather than
+     * converting an inventory index by hand. The two numberings do not match, the hotbar being
+     * offset by 36, and getting that wrong is completely silent: click the wrong index and the
+     * game does nothing at all, which is what an earlier build did.
+     */
+    private Slot firstSlot(Minecraft client, Item wanted) {
+        int limit = searchInventory.value() ? Integer.MAX_VALUE : 9;
+        for (Slot slot : client.player.inventoryMenu.slots) {
+            if (slot.index >= limit) {
                 continue;
             }
-            if (stack.getItem() == wanted) {
+            ItemStack stack = slot.getItem();
+            if (!stack.isEmpty() && stack.getItem() == wanted) {
                 return slot;
             }
         }
-        return -1;
+        return null;
     }
 
     /**
-     * Picks the best chest armour in the hotbar, so swapping back does not downgrade you. A
+     * Picks the best chest armour available, so swapping back does not downgrade you. A
      * netherite piece beats diamond, and so on down the list.
      */
-    private int findBestChestplateSlot(Minecraft client) {
+    private Slot bestChestplate(Minecraft client) {
         List<Item> order = List.of(
                 Items.NETHERITE_CHESTPLATE,
                 Items.DIAMOND_CHESTPLATE,
@@ -204,16 +171,19 @@ public final class ElySwapModule extends Module {
                 Items.LEATHER_CHESTPLATE
         );
 
-        int hotbar = Math.min(9, client.player.getInventory().getContainerSize());
+        int limit = searchInventory.value() ? Integer.MAX_VALUE : 9;
         for (Item candidate : order) {
-            for (int slot = 0; slot < hotbar; slot++) {
-                ItemStack stack = client.player.getInventory().getItem(slot);
+            for (Slot slot : client.player.inventoryMenu.slots) {
+                if (slot.index >= limit) {
+                    continue;
+                }
+                ItemStack stack = slot.getItem();
                 if (!stack.isEmpty() && stack.getItem() == candidate) {
                     return slot;
                 }
             }
         }
-        return -1;
+        return null;
     }
 
     /* ---------------------------------------------------------------- chat */
@@ -238,29 +208,17 @@ public final class ElySwapModule extends Module {
 
     /* ---------------------------------------------------------------- read */
 
-    /** What is in hand, for the HUD. */
-    public String heldLabel() {
+    /** What is in the chest slot right now, for the HUD. */
+    public String chestLabel() {
         Minecraft client = Minecraft.getInstance();
         if (client.player == null) {
             return "-";
         }
-        ItemStack stack = client.player.getInventory().getSelectedItem();
+        ItemStack stack = client.player.getItemBySlot(EquipmentSlot.CHEST);
         if (stack.isEmpty()) {
-            return "empty hand";
+            return "nothing";
         }
-        if (stack.getItem() == Items.ELYTRA) {
-            return "elytra";
-        }
-        if (stack.getItem() == Items.NETHERITE_CHESTPLATE
-                || stack.getItem() == Items.DIAMOND_CHESTPLATE
-                || stack.getItem() == Items.IRON_CHESTPLATE
-                || stack.getItem() == Items.CHAINMAIL_CHESTPLATE
-                || stack.getItem() == Items.GOLDEN_CHESTPLATE
-                || stack.getItem() == Items.COPPER_CHESTPLATE
-                || stack.getItem() == Items.LEATHER_CHESTPLATE) {
-            return "chestplate";
-        }
-        return "other item";
+        return stack.getItem() == Items.ELYTRA ? "elytra" : "chestplate";
     }
 
     public boolean keyBound() {
