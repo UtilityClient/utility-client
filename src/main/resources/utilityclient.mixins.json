@@ -12,6 +12,7 @@
     "CameraMixin",
     "MouseHandlerMixin",
     "KeyboardInputMixin",
+    "AttackMixin",
     "KeyMappingAccessor"
   ],
   "injectors": {

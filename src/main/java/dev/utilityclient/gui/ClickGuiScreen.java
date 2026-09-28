@@ -77,14 +77,21 @@ public final class ClickGuiScreen extends Screen {
 
     /* ------------------------------------------------------------------ window */
 
+    private static final int WINDOW_RADIUS = 20;
+    private static final int SIDEBAR_RADIUS = 19;
+
     private void drawWindow(GuiGraphicsExtractor graphics, int accent) {
         roundPanel(graphics, layout.windowX, layout.windowY, layout.windowWidth, layout.windowHeight,
-                20, WINDOW, BORDER);
+                WINDOW_RADIUS, WINDOW, BORDER);
+        // The sidebar panel is inset one pixel inside the border, so its radius is the window
+        // radius less one. Matching them keeps the two arcs concentric, which is what stops
+        // a dark sliver showing along the left edge.
         roundRect(graphics, layout.windowX + 1, layout.windowY + 1, layout.sidebarWidth - 2,
-                layout.windowHeight - 2, 19, SIDEBAR);
+                layout.windowHeight - 2, SIDEBAR_RADIUS, SIDEBAR);
         // Divider between the sidebar and the content area.
-        graphics.fill(layout.windowX + layout.sidebarWidth - 1, layout.windowY + 18,
-                layout.windowX + layout.sidebarWidth, layout.windowY + layout.windowHeight - 18, DIVIDER);
+        graphics.fill(layout.windowX + layout.sidebarWidth - 1, layout.windowY + WINDOW_RADIUS,
+                layout.windowX + layout.sidebarWidth,
+                layout.windowY + layout.windowHeight - WINDOW_RADIUS, DIVIDER);
         // Purple wash bleeding out of the top bar, as in the reference.
         for (int i = 0; i < 26; i++) {
             int alpha = Math.max(0, 8 - i / 3);
@@ -101,12 +108,14 @@ public final class ClickGuiScreen extends Screen {
         int y = layout.windowY + 20;
         int rowWidth = layout.sidebarWidth - 36;
 
-        // Brand
-        roundRect(graphics, x, y, 36, 36, 11, accent);
-        graphics.text(font, "U", x + 12, y + 13, 0xFF120018, false);
-        graphics.text(font, "UTILITY", x + 46, y + 6, TEXT, false);
-        graphics.text(font, "CLIENT", x + 46, y + 19, accent, false);
-        graphics.text(font, "v0.1.0", x + 46, y + 33, DIM, false);
+        // Brand. The letter is centred on the measured glyph width rather than at a guessed
+        // offset, which is what left it hanging off the tile before.
+        roundRect(graphics, x, y, 34, 34, 12, accent);
+        String mark = "U";
+        graphics.text(font, mark, x + (34 - font.width(mark)) / 2, y + 12, 0xFF16001C, false);
+        graphics.text(font, "UTILITY", x + 44, y + 5, TEXT, false);
+        graphics.text(font, "CLIENT", x + 44, y + 18, accent, false);
+        graphics.text(font, "v0.1.0", x + 44, y + 32, DIM, false);
 
         y += 58;
         graphics.fill(x, y, x + rowWidth, y + 1, BORDER_SOFT);
@@ -219,9 +228,11 @@ public final class ClickGuiScreen extends Screen {
         boolean hovered = inside(mouseX, mouseY, card.x, card.y, card.width, card.height);
         boolean on = card.module.enabled();
 
-        // Outer bloom on enabled cards.
+        // Outer bloom. The radius must be larger than the card's own, not smaller, or the
+        // halo's corners poke out past the card as square nubs biting the rounded edge.
         if (on) {
-            roundRect(graphics, card.x - 2, card.y - 2, card.width + 4, card.height + 4, 12, 0x22D000FF);
+            roundRect(graphics, card.x - 2, card.y - 2, card.width + 4, card.height + 4, 18, 0x1FD000FF);
+            roundRect(graphics, card.x - 1, card.y - 1, card.width + 2, card.height + 2, 16, 0x2ED000FF);
         }
         int fill = on ? CARD_ON : (hovered ? CARD_HOVER : CARD_OFF);
         int border = on ? accent : (hovered ? BORDER : BORDER_SOFT);

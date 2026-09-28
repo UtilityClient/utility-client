@@ -69,6 +69,16 @@ public final class ElySwapModule extends Module {
         } else {
             activateKey.value().sync(client);
         }
+        // With no activate key set, fall back to the module keybind rather than sitting
+        // there doing nothing at all. Announced once so it is not a surprise.
+        if (!activateKey.value().bound()) {
+            if (useModuleKey.value() && keyBind().consumePress(client)) {
+                pressed = true;
+            } else {
+                warnAboutMissingKey(client);
+                return;
+            }
+        }
         if (!pressed && useModuleKey.value() && keyBind().consumePress(client)) {
             pressed = true;
         }
@@ -197,6 +207,18 @@ public final class ElySwapModule extends Module {
         if (client.player != null) {
             client.player.sendSystemMessage(Component.literal("[Ely Swap] " + message));
         }
+    }
+
+    private boolean warnedAboutKey;
+
+    /** Explains the missing activate key once, instead of failing silently forever. */
+    private void warnAboutMissingKey(Minecraft client) {
+        if (warnedAboutKey) {
+            return;
+        }
+        warnedAboutKey = true;
+        say(client, "No activate key set. Turn on \"Module key swaps too\" to use the module "
+                + "keybind, or bind an activate key in the settings.");
     }
 
     /* ---------------------------------------------------------------- read */

@@ -1,5 +1,6 @@
 package dev.utilityclient.module.impl;
 
+import dev.utilityclient.mixin.AttackMixin;
 import dev.utilityclient.module.Module;
 import dev.utilityclient.module.ModuleCategory;
 import dev.utilityclient.module.ModuleSetting;
@@ -65,11 +66,14 @@ public final class MaceSwapModule extends Module {
             return;
         }
 
-        // The game's own attack binding is the trigger, so this covers hitting a mob and
-        // starting to break a block alike.
+        // Read from the mixin rather than polling the attack key. The game consumes that
+        // binding itself while handling input, before this tick runs, so polling it always
+        // sees nothing. See AttackMixin.
         boolean triggered = false;
-        if (onAttack.value() && client.options.keyAttack != null) {
-            triggered = client.options.keyAttack.consumeClick();
+        if (onAttack.value()) {
+            triggered = AttackMixin.consumeAttack();
+        } else {
+            AttackMixin.clear();
         }
         if (!triggered && manualKey.value() && keyBind().consumePress(client)) {
             triggered = true;
