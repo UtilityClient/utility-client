@@ -9,6 +9,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.MerchantContainer;
 import net.minecraft.world.inventory.MerchantMenu;
+import net.minecraft.world.inventory.MerchantResultSlot;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.trading.MerchantOffer;
 import net.minecraft.world.item.trading.MerchantOffers;
@@ -22,14 +23,19 @@ import java.lang.reflect.Field;
  * repeatedly until the offer is exhausted, then closes the window. You place the payment
  * yourself, exactly as you would by hand.
  *
- * <p>The payment is deliberately never touched. The merchant window already fills the payment
- * slots itself the moment you click an offer, and keeps them topped up while the trade is
- * available, so there is nothing useful for this module to do there. Two earlier attempts to
- * help anyway, one moving items by hand and one calling the game's own payment routine, both
- * ended up taking the player's items without trading. The routine was the more surprising
- * failure: it moves items from the inventory into the payment slots as a local change only,
- * and the game calls it in a context where the server is already watching, so calling it
- * behind the game's back quietly ate sticks. This module now only ever clicks the result slot.
+ * <p>The payment is deliberately never touched. The merchant window fills the payment slots
+ * itself when you click an offer, and the server runs the entire trade, payment included,
+ * from the single result click this module sends. Two earlier attempts to help anyway, one
+ * moving items by hand and one calling the game's own payment routine, both ended up taking
+ * the player's items without trading.
+ *
+ * <p>There was a third cause, and it was the real one. The result slot used to be found by
+ * its screen position, with index 0 as a fallback. Index 0 is a payment slot, so whenever the
+ * position check failed the module clicked a payment slot instead and picked the payment items
+ * up onto the cursor. A 32 stick for 1 emerald trade therefore ate the sticks while never
+ * trading, and no amount of fixing the surrounding code changed that, because the fault was
+ * in which slot was being clicked. The result slot is now identified by its own type, and the
+ * module stops rather than guessing if it cannot be found.
  *
  * <p>How it knows a trade is finished is worth spelling out. A villager removes an offer
  * from its list once it is exhausted, so the list getting shorter is the reliable signal.
@@ -43,20 +49,6 @@ import java.lang.reflect.Field;
  * covers running out of payment.
  */
 public final class AutoTradeModule extends Module {
-    /**
-     * The result slot is the only one at this position, which lets it be found by shape
-     * rather than trusting an index. In the vanilla merchant menu the result sits at 154,28
-     * and the two payment slots at 75, so nothing else can match.
-     */
-    private static final int RESULT_X = 154;
-    private static final int RESULT_Y = 28;
-
-    /**
-     * The result slot, in the fixed order the merchant menu uses. Only a fallback for when the
-     * position search below finds nothing, which on a real merchant window it never does.
-     */
-    private static final int RESULT_SLOT = 2;
-
     public final ModuleSetting<Integer> delay;
     public final ModuleSetting<Integer> maxTrades;
     public final ModuleSetting<Integer> idleTimeout;
@@ -162,7 +154,8 @@ public final class AutoTradeModule extends Module {
 
         int resultSlot = findResultSlot(menu);
         if (resultSlot < 0) {
-            // Should not happen in a real merchant window. Give up rather than click blind.
+            // Stops rather than clicking a guessed slot. The one time this module did that, it
+            // clicked a payment slot and took the player's items, so it never guesses again.
             finish(client, "Could not find the trade result slot, stopping");
             return;
         }
@@ -190,8 +183,9 @@ public final class AutoTradeModule extends Module {
             return;
         }
 
-        // A plain left click, the same one a player makes on the result slot. Nothing here
-        // touches the payment slots or the inventory.
+        // A plain left click on the result slot, the same one a player makes. The server runs
+        // the whole trade from this one packet, payment included, so nothing here touches the
+        // payment slots or the inventory at all.
         client.gameMode.handleContainerInput(menu.containerId, resultSlot, 0,
                 ContainerInput.PICKUP, client.player);
         trades++;
@@ -214,22 +208,33 @@ public final class AutoTradeModule extends Module {
     }
 
     /**
-     * Finds the result slot by its position in the window. Index 0 is used as a fallback
-     * only if the position check finds nothing, which on a normal merchant window it never
-     * will.
+     * Finds the result slot by its type.
+     *
+     * <p>An earlier version found it by screen position, 154,28, and fell back to index 0 when
+     * that found nothing. Index 0 is the first payment slot. So if the position check ever
+     * failed, the module clicked the payment slot instead, which picks the payment items up
+     * onto the cursor. That is why it appeared to grab the sticks rather than the emerald, and
+     * it is why the symptom never went away no matter what else was changed.
+     *
+     * <p>Matching on the slot's actual class cannot fail that way. The merchant menu builds
+     * its result slot as a distinct type, and the two payment slots are ordinary slots, so
+     * there is exactly one match and it is always the right one, whatever the window layout
+     * or resolution.
+     *
+     * <p>There is deliberately no fallback any more. If the result slot cannot be identified
+     * the module stops rather than guessing, because guessing here costs the player items.
      */
     private static int findResultSlot(MerchantMenu menu) {
         try {
             for (int index = 0; index < menu.slots.size(); index++) {
-                net.minecraft.world.inventory.Slot slot = menu.getSlot(index);
-                if (slot != null && slot.x == RESULT_X && slot.y == RESULT_Y) {
+                if (menu.getSlot(index) instanceof MerchantResultSlot) {
                     return index;
                 }
             }
         } catch (RuntimeException exception) {
-            return 0;
+            return -1;
         }
-        return menu.slots.isEmpty() ? -1 : 0;
+        return -1;
     }
 
     /* ---------------------------------------------------------------- state */
