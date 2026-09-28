@@ -5,6 +5,7 @@ import dev.utilityclient.module.impl.CrosshairModule;
 import dev.utilityclient.module.impl.CustomBreakAnimationModule;
 import dev.utilityclient.module.impl.HudModule;
 import dev.utilityclient.module.impl.PlayerRadarModule;
+import dev.utilityclient.module.impl.TargetLockModule;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.player.LocalPlayer;
@@ -44,6 +45,69 @@ public final class HudOverlay {
         }
         if (modules.isEnabled("crosshair")) {
             drawCrosshair(graphics, client, (CrosshairModule) modules.find("crosshair"));
+        }
+        TargetLockModule targetLock = (TargetLockModule) modules.find("target-lock");
+        if (targetLock != null && targetLock.enabled()) {
+            drawTargetLock(graphics, client, targetLock);
+        }
+    }
+
+    // ------------------------------------------------------------ target lock
+
+    /**
+     * The circle in the middle of the screen that marks a locked target.
+     *
+     * <p>It is a ring, sized by the module's FOV setting and eased toward that size by the
+     * smoothness setting, so it grows into place rather than appearing at full size. The
+     * target's name and distance go underneath it.
+     *
+     * <p>This is drawn only while a target is locked, and the module only ever locks someone
+     * the player can already see. It is a marker, not a tracker: nothing here reveals
+     * anything the client was not already showing, and it sends nothing to the server.
+     */
+    private static void drawTargetLock(GuiGraphicsExtractor graphics, Minecraft client,
+                                       TargetLockModule lock) {
+        int radius = lock.drawRadius();
+        if (radius <= 0) {
+            return;
+        }
+        int centerX = graphics.guiWidth() / 2;
+        int centerY = graphics.guiHeight() / 2;
+        int rgba = lock.rgba();
+        int thickness = lock.lineThickness();
+
+        // Concentric bands rather than a single pass, so the ring has real thickness and a
+        // soft inner edge rather than looking like a single row of pixels.
+        float inner = radius - thickness;
+        if (inner < 0) {
+            inner = 0;
+        }
+        int steps = Math.max(24, radius * 2);
+        for (int i = 0; i < steps; i++) {
+            double angle = (Math.PI * 2.0 * i) / steps;
+            for (int band = 0; band < thickness; band++) {
+                double r = inner + band;
+                int px = centerX + (int) Math.round(Math.cos(angle) * r);
+                int py = centerY + (int) Math.round(Math.sin(angle) * r);
+                fillRect(graphics, px, py, 1, 1, rgba);
+            }
+        }
+
+        // Four short ticks on the axes, so the circle reads as a reticle rather than a plain
+        // ring and its centre stays obvious.
+        for (int band = 0; band < thickness; band++) {
+            int r = (int) Math.round(inner) + band;
+            fillRect(graphics, centerX + r, centerY, 1, 1, rgba);
+            fillRect(graphics, centerX - r - 1, centerY, 1, 1, rgba);
+            fillRect(graphics, centerX, centerY + r, 1, 1, rgba);
+            fillRect(graphics, centerX, centerY - r - 1, 1, 1, rgba);
+        }
+
+        String label = lock.label(client);
+        if (!label.isEmpty()) {
+            int labelY = centerY + radius + 6;
+            graphics.text(client.font, label,
+                    centerX - client.font.width(label) / 2, labelY, rgba, false);
         }
     }
 
