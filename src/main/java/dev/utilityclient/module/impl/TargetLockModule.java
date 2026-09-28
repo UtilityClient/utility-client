@@ -229,6 +229,17 @@ public final class TargetLockModule extends Module {
         return target != null;
     }
 
+    /**
+     * The currently locked entity, or null.
+     *
+     * <p>Exposed so Target ESP can mark exactly this entity rather than scanning the world
+     * for players of its own. One source of truth for "who is my target" is better than two
+     * modules each deciding independently and disagreeing.
+     */
+    public Entity targetEntity() {
+        return target;
+    }
+
     public int rgba() {
         return 0xFF000000 | color.colorValue();
     }

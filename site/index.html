@@ -42,7 +42,7 @@
         <a class="btn btn-ghost" href="#modules" data-edit="hero.cta2" data-label="Hero button 2">Browse modules</a>
       </div>
       <dl class="facts" data-repeat="fact">
-        <div><dt data-edit="facts.0.v" data-label="Stat 1 value">23</dt><dd data-edit="facts.0.l" data-label="Stat 1 label">modules</dd></div>
+        <div><dt data-edit="facts.0.v" data-label="Stat 1 value">24</dt><dd data-edit="facts.0.l" data-label="Stat 1 label">modules</dd></div>
         <div><dt data-edit="facts.1.v" data-label="Stat 2 value">1 key</dt><dd data-edit="facts.1.l" data-label="Stat 2 label">opens the menu</dd></div>
         <div><dt data-edit="facts.2.v" data-label="Stat 3 value">0</dt><dd data-edit="facts.2.l" data-label="Stat 3 label">server side changes</dd></div>
         <div><dt data-edit="facts.3.v" data-label="Stat 4 value">JSON</dt><dd data-edit="facts.3.l" data-label="Stat 4 label">config file</dd></div>
@@ -100,6 +100,7 @@
       is no combat macro of any kind. But Target ESP is an x-ray, it shows you players the server is
       deliberately hiding, and it is the most commonly banned thing a Minecraft client can do. It
       is here because private servers with friends asked for it. Do not load it on a public server.
+      Player ESP marks everyone in range, Target ESP marks only the one you have locked.
     </p>
 
     <div class="filter-bar">
@@ -247,13 +248,23 @@
         </ul>
       </article>
 
+      <article class="card module" data-cat="VISUAL" data-name="player esp">
+        <div class="module-top"><h3 data-edit="modules.player esp.name" data-label="player esp name">Player ESP</h3><span class="tag" data-edit="modules.player esp.tag" data-label="player esp tag">Visual</span></div>
+        <p data-edit="modules.player esp.desc" data-label="player esp description">Marks every player in range, including ones behind walls. The through walls part is an x-ray and gets accounts banned on public servers.</p>
+        <ul class="module-list">
+          <li data-edit="modules.player esp.b0" data-label="player esp bullet 1">Corner, box or both, with your own colours, thickness and range</li>
+          <li data-edit="modules.player esp.b1" data-label="player esp bullet 2">Optional tracers, names and distances</li>
+          <li data-edit="modules.player esp.b2" data-label="player esp bullet 3">Turn "Through walls" off to mark only players you are already looking at</li>
+        </ul>
+      </article>
+
       <article class="card module" data-cat="VISUAL" data-name="target esp">
         <div class="module-top"><h3 data-edit="modules.target esp.name" data-label="target esp name">Target ESP</h3><span class="tag" data-edit="modules.target esp.tag" data-label="target esp tag">Visual</span></div>
-        <p data-edit="modules.target esp.desc" data-label="target esp description">Draws a marker on players, including ones behind walls. This is an x-ray and it will get your account banned on any public server.</p>
+        <p data-edit="modules.target esp.desc" data-label="target esp description">Marks only the one player Target Lock is holding, so you can keep them marked through a wall without marking everyone.</p>
         <ul class="module-list">
-          <li data-edit="modules.target esp.b0" data-label="target esp bullet 1">Corner, box or both, with your own colours, thickness and range</li>
-          <li data-edit="modules.target esp.b1" data-label="target esp bullet 2">Optional tracers, names and distances</li>
-          <li data-edit="modules.target esp.b2" data-label="target esp bullet 3">Turn "Through walls" off to mark only players you are already looking at</li>
+          <li data-edit="modules.target esp.b0" data-label="target esp bullet 1">Draws nothing at all until you have a target locked</li>
+          <li data-edit="modules.target esp.b1" data-label="target esp bullet 2">Reads Target Lock's choice, so the two can never disagree about who it is</li>
+          <li data-edit="modules.target esp.b2" data-label="target esp bullet 3">Turn "Through walls" off to mark only someone you are already looking at</li>
         </ul>
       </article>
 

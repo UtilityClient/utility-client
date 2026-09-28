@@ -7,6 +7,8 @@ import dev.utilityclient.module.impl.HudModule;
 import dev.utilityclient.module.impl.PlayerRadarModule;
 import dev.utilityclient.module.impl.TargetLockModule;
 import dev.utilityclient.module.impl.TargetEspModule;
+import dev.utilityclient.module.impl.PlayerEspModule;
+import dev.utilityclient.util.EspProjection;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.player.LocalPlayer;
@@ -53,129 +55,11 @@ public final class HudOverlay {
         }
         TargetEspModule targetEsp = (TargetEspModule) modules.find("target-esp");
         if (targetEsp != null && targetEsp.enabled()) {
-            drawTargetEsp(graphics, client, targetEsp);
+            EspProjection.paint(graphics, client, targetEsp.collect(client), targetEsp);
         }
-    }
-
-    // ------------------------------------------------------------------ esp
-
-    /**
-     * Draws a marker around every entity the module has collected.
-     *
-     * <p>Positions come from the module, which projects each entity's bounding box with the
-     * game's own projector, so the boxes are correct at any angle, FOV, or GUI scale. This
-     * method only turns those eight points into lines.
-     *
-     * <p>This is the x-ray part of the client. It shows players the server has not sent you,
-     * and that is why it will get an account banned on any server with a real anticheat. It is
-     * documented as such in the module, on the site, and in a chat warning the first time it
-     * is switched on, because a cheat that does not admit what it is is worse than useless.
-     */
-    private static void drawTargetEsp(GuiGraphicsExtractor graphics, Minecraft client,
-                                      TargetEspModule esp) {
-        List<TargetEspModule.Marker> markers = esp.collect(client);
-        if (markers.isEmpty()) {
-            return;
-        }
-
-        int thickness = esp.thickness();
-        int corner = esp.cornerSize();
-        String style = esp.styleName();
-
-        for (TargetEspModule.Marker marker : markers) {
-            int width = marker.maxX - marker.minX;
-            int height = marker.maxY - marker.minY;
-            if (width <= 0 || height <= 0) {
-                continue;
-            }
-
-            int fill = esp.fillAlpha();
-            if (fill > 0) {
-                // The fill is drawn at low alpha under the outline, tinted with the marker's
-                // own colour so a visible player reads differently from one behind a wall.
-                int fillColor = (fill << 24) | (marker.argb & 0x00FFFFFF);
-                graphics.fill(marker.minX, marker.minY, marker.maxX, marker.maxY, fillColor);
-            }
-
-            boolean corners = "corners".equals(style) || "both".equals(style);
-            boolean outline = "box".equals(style) || "both".equals(style);
-
-            if (outline) {
-                strokeRect(graphics, marker.minX, marker.minY, width, height, thickness, marker.argb);
-            }
-            if (corners) {
-                strokeCorners(graphics, marker.minX, marker.minY, width, height,
-                        Math.min(corner, Math.min(width, height) / 2), thickness, marker.argb);
-            }
-
-            if (esp.tracers()) {
-                int lineColor = (0xB0000000 | (marker.argb & 0x00FFFFFF));
-                int fromX = graphics.guiWidth() / 2;
-                int fromY = graphics.guiHeight();
-                drawLine(graphics, fromX, fromY, marker.minX + width / 2, marker.minY + height / 2,
-                        lineColor);
-            }
-
-            if (!marker.label.isEmpty()) {
-                int labelY = marker.minY - 10;
-                if (labelY < 2) {
-                    labelY = marker.minY + 2;
-                }
-                graphics.text(client.font, marker.label,
-                        marker.minX + width / 2 - client.font.width(marker.label) / 2,
-                        labelY, marker.argb, false);
-            }
-        }
-    }
-
-    private static void strokeRect(GuiGraphicsExtractor graphics, int x, int y, int width, int height,
-                                   int thickness, int color) {
-        int t = Math.max(1, thickness);
-        for (int i = 0; i < t; i++) {
-            graphics.fill(x + i, y + i, x + width - i, y + i + 1, color);
-            graphics.fill(x + i, y + height - i - 1, x + width - i, y + height - i, color);
-            graphics.fill(x + i, y + i, x + i + 1, y + height - i, color);
-            graphics.fill(x + width - i - 1, y + i, x + width - i, y + height - i, color);
-        }
-    }
-
-    private static void strokeCorners(GuiGraphicsExtractor graphics, int x, int y, int width, int height,
-                                      int length, int thickness, int color) {
-        int t = Math.max(1, thickness);
-        int l = Math.max(1, length);
-        for (int i = 0; i < t; i++) {
-            // top-left
-            graphics.fill(x + i, y + i, x + l + i, y + i + 1, color);
-            graphics.fill(x + i, y + i, x + i + 1, y + l + i, color);
-            // top-right
-            graphics.fill(x + width - l - i, y + i, x + width - i, y + i + 1, color);
-            graphics.fill(x + width - i - 1, y + i, x + width - i, y + l + i, color);
-            // bottom-left
-            graphics.fill(x + i, y + height - i - 1, x + l + i, y + height - i, color);
-            graphics.fill(x + i, y + height - l - i, x + i + 1, y + height - i, color);
-            // bottom-right
-            graphics.fill(x + width - l - i, y + height - i - 1, x + width - i, y + height - i, color);
-            graphics.fill(x + width - i - 1, y + height - l - i, x + width - i, y + height - i, color);
-        }
-    }
-
-    /** A straight line, drawn one pixel per step along the major axis. */
-    private static void drawLine(GuiGraphicsExtractor graphics, int x0, int y0, int x1, int y1,
-                                 int color) {
-        int dx = Math.abs(x1 - x0);
-        int dy = Math.abs(y1 - y0);
-        int sx = x0 < x1 ? 1 : -1;
-        int sy = y0 < y1 ? 1 : -1;
-        int steps = Math.max(dx, dy);
-        if (steps <= 0) {
-            return;
-        }
-        // Bounded so a badly projected marker cannot spin the renderer for a frame.
-        steps = Math.min(steps, 4000);
-        for (int i = 0; i <= steps; i++) {
-            int x = x0 + (x1 - x0) * i / steps;
-            int y = y0 + (y1 - y0) * i / steps;
-            fillRect(graphics, x, y, 1, 1, color);
+        PlayerEspModule playerEsp = (PlayerEspModule) modules.find("player-esp");
+        if (playerEsp != null && playerEsp.enabled()) {
+            EspProjection.paint(graphics, client, playerEsp.collect(client), playerEsp);
         }
     }
 
