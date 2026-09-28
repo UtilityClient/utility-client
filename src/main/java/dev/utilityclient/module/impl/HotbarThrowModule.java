@@ -157,16 +157,27 @@ public abstract class HotbarThrowModule extends Module {
         }
 
         int current = client.player.getInventory().getSelectedSlot();
+        throwSlot = found;
+        countBefore = countIn(client, found);
+
         if (current == found) {
+            // Already in hand. Throw it straight away and put nothing back afterwards,
+            // because the player chose to be holding it rather than the module swapping
+            // them into it. returnSlot stays -1, so restore does nothing.
+            returnSlot = -1;
             if (showStatus.value()) {
-                say(client, "You already have one in hand.");
+                say(client, "Already in hand, throwing without swapping.");
+            }
+            if (switchDelay.value() == 0) {
+                doThrow(client);
+            } else {
+                timer = switchDelay.value();
+                stage = Stage.SWITCHING;
             }
             return;
         }
 
-        throwSlot = found;
         returnSlot = current;
-        countBefore = countIn(client, found);
         timer = switchDelay.value();
         stage = Stage.SWITCHING;
         // Packets go out in the order they are queued, so selecting and then using in the
