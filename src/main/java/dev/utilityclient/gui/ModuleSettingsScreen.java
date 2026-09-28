@@ -355,8 +355,29 @@ public final class ModuleSettingsScreen extends Screen {
 
     @Override
     public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        // A KEYBIND setting has to be bindable to a mouse button, not just a key. This path
+        // was missing entirely, so an activate key could only ever be a keyboard key, while
+        // the module's own keybind below already supported the mouse.
+        if (listeningSettingId != null) {
+            int button = event.button();
+            // Scroll wheel reports as a button, and binding it would silently never fire.
+            if (button >= 0 && button < GLFW.GLFW_MOUSE_BUTTON_LAST + 1) {
+                setKeybindSetting(listeningSettingId,
+                        InputConstants.Type.MOUSE.getOrCreate(button));
+            } else {
+                showMessage("Keybind unchanged.", MUTED);
+            }
+            listeningSettingId = null;
+            return true;
+        }
         if (listening) {
-            module.keyBind().setMouse(event.button());
+            int button = event.button();
+            // Scroll wheel reports as a button, and binding it would silently never fire.
+            if (button >= 0 && button < GLFW.GLFW_MOUSE_BUTTON_LAST + 1) {
+                module.keyBind().setMouse(button);
+            } else {
+                showMessage("Keybind unchanged.", MUTED);
+            }
             finishBinding();
             return true;
         }

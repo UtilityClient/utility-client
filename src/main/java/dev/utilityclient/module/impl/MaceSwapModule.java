@@ -39,6 +39,9 @@ public final class MaceSwapModule extends Module {
     public final ModuleSetting<Integer> returnDelay;
     public final ModuleSetting<Boolean> showStatus;
 
+    /** One instance per module, so this module's return cannot clobber Ely Swap's. */
+    private final HotbarMemory memory = new HotbarMemory();
+
     public MaceSwapModule() {
         super("mace-swap", "Mace Swap",
                 "Swaps to a mace when you attack.",
@@ -67,7 +70,7 @@ public final class MaceSwapModule extends Module {
     @Override
     public void tick(Minecraft client) {
         if (client.player == null || client.level == null) {
-            HotbarMemory.forget();
+            memory.forget();
             return;
         }
         // Equipping while a real menu is open would fight with whatever the player is
@@ -79,8 +82,8 @@ public final class MaceSwapModule extends Module {
         // A pending return is handled before anything else, and cancelling a pending return
         // is the first thing a fresh swap does. Without this, an attack one tick before the
         // timer expired would swap to the mace and then immediately bounce back.
-        if (HotbarMemory.tickReturn()) {
-            if (HotbarMemory.returnIfUnmoved(client) && showStatus.value()) {
+        if (memory.tickReturn()) {
+            if (memory.returnIfUnmoved(client) && showStatus.value()) {
                 say(client, "Switched back.");
             }
         }
@@ -140,7 +143,7 @@ public final class MaceSwapModule extends Module {
     public void onDisable() {
         // Drop any pending return, so switching the module off never leaves it firing a
         // swap later on.
-        HotbarMemory.forget();
+        memory.forget();
         AttackState.clear();
     }
 
@@ -188,12 +191,12 @@ public final class MaceSwapModule extends Module {
 
         // Swapping again while a return is pending means the player wants the mace for
         // longer, so the old timer is dropped rather than firing against the new swap.
-        HotbarMemory.forget();
-        if (!HotbarMemory.swapTo(client, best)) {
+        memory.forget();
+        if (!memory.swapTo(client, best)) {
             return;
         }
         if (switchBack.value()) {
-            HotbarMemory.returnAfter(returnDelay.value());
+            memory.returnAfter(returnDelay.value());
         }
 
         if (showStatus.value()) {

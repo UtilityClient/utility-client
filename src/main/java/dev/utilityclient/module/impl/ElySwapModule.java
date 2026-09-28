@@ -45,6 +45,9 @@ public final class ElySwapModule extends Module {
     public final ModuleSetting<Integer> returnDelay;
     public final ModuleSetting<Boolean> showStatus;
 
+    /** One instance per module, so this module's return cannot clobber Mace Swap's. */
+    private final HotbarMemory memory = new HotbarMemory();
+
     public ElySwapModule() {
         super("ely-swap", "Ely Swap",
                 "Swaps between the elytra and chestplate in your hotbar with one key.",
@@ -68,7 +71,7 @@ public final class ElySwapModule extends Module {
     @Override
     public void tick(Minecraft client) {
         if (client.player == null || client.level == null) {
-            HotbarMemory.forget();
+            memory.forget();
             dev.utilityclient.util.UseState.clear();
             return;
         }
@@ -82,8 +85,8 @@ public final class ElySwapModule extends Module {
         // A pending delayed return is handled first. Cancelling a pending return is also the
         // first thing a fresh swap does, so pressing again before it fires goes to the other
         // item rather than bouncing back to where you started.
-        if (HotbarMemory.tickReturn()) {
-            if (HotbarMemory.returnIfUnmoved(client) && showStatus.value()) {
+        if (memory.tickReturn()) {
+            if (memory.returnIfUnmoved(client) && showStatus.value()) {
                 say(client, "Switched back to your previous item.");
             }
             return;
@@ -97,7 +100,7 @@ public final class ElySwapModule extends Module {
         // key is the swap in every case. Reading the use state rather than the key binding is
         // deliberate: the game consumes that binding itself before the tick runs, so polling
         // it would never see anything.
-        if (rightClickWantsReturn(client) && HotbarMemory.returnIfUnmoved(client)) {
+        if (rightClickWantsReturn(client) && memory.returnIfUnmoved(client)) {
             if (showStatus.value()) {
                 say(client, "Switched back to your previous item.");
             }
@@ -111,7 +114,7 @@ public final class ElySwapModule extends Module {
     public void onDisable() {
         // Never leave a pending return armed, or switching the module off would fire a swap
         // later on.
-        HotbarMemory.forget();
+        memory.forget();
         dev.utilityclient.util.UseState.clear();
     }
 
@@ -152,6 +155,19 @@ public final class ElySwapModule extends Module {
     /* ---------------------------------------------------------------- swap */
 
     private void swap(Minecraft client) {
+        // The return is resolved before anything else. Working it out after looking for the
+        // target item meant a press meant to go back could fail with "no elytra in your
+        // hotbar", because the search had already run and failed by then. Going back should
+        // never depend on still owning the item you swapped to.
+        if (memory.armed() && "On next press".equals(returnBehaviour.value())) {
+            if (memory.returnIfUnmoved(client)) {
+                if (showStatus.value()) {
+                    say(client, "Switched back to your previous item.");
+                }
+                return;
+            }
+        }
+
         int current = client.player.getInventory().getSelectedSlot();
         boolean holdingElytra = isElytra(client.player.getInventory().getSelectedItem());
 
@@ -170,33 +186,19 @@ public final class ElySwapModule extends Module {
             return;
         }
 
-        // Pressing again while a previous item is remembered means the player wants to go
-        // back, which is what makes one press in and one press out work with no settings
-        // changed. The remembered slot is only consumed once that return has happened.
-        if (HotbarMemory.armed() && "On next press".equals(returnBehaviour.value())) {
-            if (HotbarMemory.returnIfUnmoved(client)) {
-                if (showStatus.value()) {
-                    say(client, "Switched back to your previous item.");
-                }
-                return;
-            }
-        }
-
         // Swapping again drops any pending return, so a fresh swap is not immediately undone.
-        HotbarMemory.forget();
-        if (!HotbarMemory.swapTo(client, target)) {
+        memory.forget();
+        if (!memory.swapTo(client, target)) {
             // Already holding it. The player chose this, so do not start a return that would
             // move them off a slot they are deliberately on.
             return;
         }
         if ("After a delay".equals(returnBehaviour.value())) {
-            HotbarMemory.returnAfter(returnDelay.value());
+            memory.returnAfter(returnDelay.value());
         }
 
         if (showStatus.value()) {
-            say(client, holdingElytra && target == current
-                    ? "Already holding the chestplate."
-                    : "Swapped to " + what + ".");
+            say(client, "Swapped to " + what + ".");
         }
     }
 

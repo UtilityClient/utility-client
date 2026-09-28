@@ -10,20 +10,22 @@ import net.minecraft.network.protocol.game.ServerboundSetCarriedItemPacket;
  * was actually holding. They differ only in when they return, so the bookkeeping and the
  * selection change live here.
  *
+ * <p>This is deliberately per module, one instance each, rather than shared static state. Two
+ * modules with a static version would overwrite each other's remembered slot: swapping with
+ * one would lose where the other was going back to, and one module's return would fire at the
+ * other module's target.
+ *
  * <p>Only the hotbar selection changes. The selection is set locally and the server is told
  * separately, so both sides agree on what is in hand. No item is picked up, moved or
  * consumed, and nothing here writes to an item stack.
  */
 public final class HotbarMemory {
     /** The slot the player was on before we swapped away from it, or -1 for none. */
-    private static int previous = -1;
+    private int previous = -1;
     /** The slot we swapped to, so we can tell whether the player has since moved on. */
-    private static int swappedTo = -1;
-    /** Ticks remaining before an automatic return is due. */
-    private static int returnIn = -1;
-
-    private HotbarMemory() {
-    }
+    private int swappedTo = -1;
+    /** Ticks remaining before an automatic return is due, or -1 when none is armed. */
+    private int returnIn = -1;
 
     /**
      * Selects a slot and remembers where we came from.
@@ -34,7 +36,7 @@ public final class HotbarMemory {
      *
      * @return true when the selection actually changed
      */
-    public static boolean swapTo(Minecraft client, int slot) {
+    public boolean swapTo(Minecraft client, int slot) {
         if (slot < 0 || client.player == null) {
             return false;
         }
@@ -53,9 +55,9 @@ public final class HotbarMemory {
      *
      * <p>One tick is 50 milliseconds, which is the smallest gap that still lets the server
      * process the swap before the return. Zero is not offered, because swapping and swapping
-     * straight back inside one tick means the mace is never really in hand.
+     * straight back inside one tick means the item is never really in hand.
      */
-    public static void returnAfter(int ticks) {
+    public void returnAfter(int ticks) {
         returnIn = Math.max(1, ticks);
     }
 
@@ -68,7 +70,7 @@ public final class HotbarMemory {
      *
      * @return true when a return happened
      */
-    public static boolean returnIfUnmoved(Minecraft client) {
+    public boolean returnIfUnmoved(Minecraft client) {
         if (client.player == null) {
             forget();
             return false;
@@ -88,7 +90,7 @@ public final class HotbarMemory {
     }
 
     /** True when an automatic return is pending, for the HUD. */
-    public static int ticksUntilReturn() {
+    public int ticksUntilReturn() {
         return returnIn;
     }
 
@@ -96,7 +98,7 @@ public final class HotbarMemory {
      * Counts down the automatic return. Called every tick, returns true on the tick the
      * return is due so the caller can act on it exactly once.
      */
-    public static boolean tickReturn() {
+    public boolean tickReturn() {
         if (returnIn < 0) {
             return false;
         }
@@ -107,14 +109,14 @@ public final class HotbarMemory {
         return true;
     }
 
-    public static void forget() {
+    public void forget() {
         previous = -1;
         swappedTo = -1;
         returnIn = -1;
     }
 
     /** True when there is something to go back to. */
-    public static boolean armed() {
+    public boolean armed() {
         return previous >= 0 && previous != swappedTo;
     }
 
